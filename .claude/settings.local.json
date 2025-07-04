@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude --version)",
+      "Bash(ls:*)",
+      "Bash(npm i:*)",
+      "Bash(find:*)",
+      "Bash(compgen:*)",
+      "Bash(env)",
+      "Bash(npx:*)"
+    ],
+    "deny": []
+  }
+}
