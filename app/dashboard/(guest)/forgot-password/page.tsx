@@ -16,8 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Loader2Icon, MailIcon } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2Icon, MailIcon, CheckCircleIcon } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { handleError } from "@/lib/error-handler";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address")
@@ -28,6 +29,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { resetPassword } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -38,13 +40,42 @@ export default function Page() {
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast.success("Request submitted!");
-
-    return false;
+    
+    try {
+      await resetPassword(data.email);
+      setIsSubmitted(true);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isSubmitted) {
+    return (
+      <div className="flex items-center justify-center py-4 lg:h-screen">
+        <Card className="mx-auto w-96">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <CheckCircleIcon className="h-12 w-12 text-green-500" />
+            </div>
+            <CardTitle className="text-2xl">Check Your Email</CardTitle>
+            <CardDescription>
+              We&apos;ve sent password reset instructions to your email address. Please check your inbox and follow the link to reset your password.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex justify-center">
+            <p className="text-sm">
+              Remember your password?{" "}
+              <a href="/dashboard/login/v2" className="underline">
+                Back to login
+              </a>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center py-4 lg:h-screen">
@@ -52,7 +83,7 @@ export default function Page() {
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
           <CardDescription>
-            Enter your email address and we&#39;ll send you instructions to reset your password.
+            Enter your email address and we&apos;ll send you instructions to reset your password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,7 +106,8 @@ export default function Page() {
                           type="email"
                           autoComplete="email"
                           className="w-full pl-10"
-                          placeholder="Enter your email addresss"
+                          placeholder="Enter your email address"
+                          disabled={isSubmitting}
                         />
                       </div>
                     </FormControl>
@@ -86,8 +118,8 @@ export default function Page() {
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2Icon className="animate-spin" />
-                    Please wait
+                    <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
+                    Sending Instructions...
                   </>
                 ) : (
                   "Send Reset Instructions"
@@ -98,9 +130,9 @@ export default function Page() {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm">
-            Already have an account?{" "}
+            Remember your password?{" "}
             <a href="/dashboard/login/v2" className="underline">
-              Log in
+              Back to login
             </a>
           </p>
         </CardFooter>

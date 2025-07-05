@@ -1,30 +1,49 @@
+'use client'
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { GithubIcon } from "lucide-react";
-import { generateMeta } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-export function generateMetadata() {
-  return generateMeta({
-    title: "Login Page",
-    description:
-      "A login form with email and password. There's an option to login with Google and a link to sign up if you don't have an account.",
-    canonical: "/login/v1"
-  });
-}
+import { useAuth } from "@/hooks/use-auth";
+import { handleError, handleSuccess } from "@/lib/error-handler";
 
 export default function Page() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { signIn } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const result = await signIn(email, password);
+      if (result) {
+        handleSuccess("Welcome back!");
+        router.push("/dashboard/default");
+      }
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex pb-8 lg:h-screen lg:pb-0">
       <div className="hidden w-1/2 bg-gray-100 lg:block">
         <Image
           width={1000}
           height={1000}
-          src={`https://bundui-images.netlify.app/extra/image4.jpg`}
-          alt="shadcn/ui login page"
+          src="https://bundui-images.netlify.app/extra/image4.jpg"
+          alt="Login background"
           className="h-full w-full object-cover"
           unoptimized
         />
@@ -33,11 +52,25 @@ export default function Page() {
       <div className="flex w-full items-center justify-center lg:w-1/2">
         <div className="w-full max-w-md space-y-8 px-4">
           <div className="text-center">
-            <h2 className="mt-6 text-3xl font-bold">Welcome back</h2>
-            <p className="text-muted-foreground mt-2 text-sm">Please sign in to your account</p>
+            <Image
+              width={50}
+              height={50}
+              className="mx-auto h-12 w-auto"
+              src="/logo.png"
+              alt="Logo"
+            />
+            <h2 className="mt-6 text-3xl font-bold">Sign in to your account</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Or{" "}
+              <Link
+                href="/dashboard/register/v1"
+                className="font-medium text-indigo-600 hover:text-indigo-500">
+                create a new account
+              </Link>
+            </p>
           </div>
 
-          <form className="mt-8 space-y-6">
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="email" className="sr-only">
@@ -51,6 +84,9 @@ export default function Page() {
                   required
                   className="w-full"
                   placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div>
@@ -65,20 +101,26 @@ export default function Page() {
                   required
                   className="w-full"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
-              <div className="text-end">
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
                 <Link
                   href="/dashboard/forgot-password"
-                  className="ml-auto inline-block text-sm underline">
+                  className="font-medium text-indigo-600 hover:text-indigo-500">
                   Forgot your password?
                 </Link>
               </div>
             </div>
 
             <div>
-              <Button type="submit" className="w-full">
-                Sign in
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </div>
           </form>
@@ -91,8 +133,8 @@ export default function Page() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="outline" className="w-full">
-                <svg viewBox="0 0 24 24">
+              <Button variant="outline" className="w-full" disabled>
+                <svg viewBox="0 0 24 24" className="w-4 h-4">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -112,17 +154,10 @@ export default function Page() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="w-full">
-                <GithubIcon />
+              <Button variant="outline" className="w-full" disabled>
+                <GithubIcon className="w-4 h-4" />
                 GitHub
               </Button>
-            </div>
-
-            <div className="mt-6 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link href="/dashboard/register/v1" className="underline">
-                Sign up
-              </Link>
             </div>
           </div>
         </div>
