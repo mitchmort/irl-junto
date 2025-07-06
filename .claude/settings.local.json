@@ -7,7 +7,12 @@
       "Bash(find:*)",
       "Bash(compgen:*)",
       "Bash(env)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(cp:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

@@ -43,7 +43,8 @@ export const page_routes: PageRoutesType[] = [
     items: [
       { title: "AI Chat", href: "/dashboard/apps/ai-chat", icon: "Brain", isNew: true },
       { title: "Chats", href: "/dashboard/apps/chat", icon: "MessageSquare", isDataBadge: "4" },
-      { title: "Calendar", href: "/dashboard/apps/calendar", icon: "Calendar" }
+      { title: "Calendar", href: "/dashboard/apps/calendar", icon: "Calendar" },
+      { title: "Events", href: "/dashboard/events", icon: "Calendar", isNew: true }
     ]
   },
   {
