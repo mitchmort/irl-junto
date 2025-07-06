@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,33 +17,40 @@ import {
   FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import { useFileUpload } from "@/hooks/use-file-upload";
+import { CameraIcon, ChevronDownIcon, XIcon } from "lucide-react";
+
+// Sports options for JUNTO
+const SPORTS_OPTIONS = [
+  { id: "basketball", label: "Basketball" },
+  { id: "tennis", label: "Tennis" },
+  { id: "pickleball", label: "Pickleball" },
+  { id: "volleyball", label: "Volleyball" },
+  { id: "soccer", label: "Soccer" },
+  { id: "climbing", label: "Climbing" },
+] as const;
 
 const profileFormSchema = z.object({
-  username: z
+  name: z
     .string()
     .min(2, {
-      message: "Username must be at least 2 characters."
+      message: "Name must be at least 2 characters."
     })
-    .max(30, {
-      message: "Username must not be longer than 30 characters."
+    .max(50, {
+      message: "Name must not be longer than 50 characters."
     }),
-  email: z
-    .string({
-      required_error: "Please select an email to display."
-    })
-    .email(),
   bio: z.string().max(160).min(4),
-  urls: z
+  photo: z.string().optional(),
+  sports: z.array(z.string()).optional(),
+  socialLinks: z
     .array(
       z.object({
         value: z.string().url({ message: "Please enter a valid URL." })
@@ -54,83 +61,128 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-// This can come from your database or API.
+// Default values for the form
 const defaultValues: Partial<ProfileFormValues> = {
-  bio: "I own a computer.",
-  urls: [{ value: "https://shadcn.com" }, { value: "http://twitter.com/shadcn" }]
+  name: "",
+  bio: "Passionate athlete looking to connect with other players for exciting games and events.",
+  photo: "",
+  sports: [],
+  socialLinks: [{ value: "" }]
 };
 
 export default function Page() {
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>("");
+  const [sportsDropdownOpen, setSportsDropdownOpen] = useState(false);
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
     mode: "onChange"
   });
 
-  const { fields, append } = useFieldArray({
-    name: "urls",
+  const { fields, append, remove } = useFieldArray({
+    name: "socialLinks",
     control: form.control
+  });
+
+  const [fileState, fileActions] = useFileUpload({
+    maxFiles: 1,
+    maxSize: 5 * 1024 * 1024, // 5MB
+    accept: "image/*",
+    multiple: false,
+    onFilesChange: (files) => {
+      if (files.length > 0 && files[0].preview) {
+        setProfilePhotoPreview(files[0].preview);
+        form.setValue("photo", files[0].preview);
+      } else {
+        setProfilePhotoPreview("");
+        form.setValue("photo", "");
+      }
+    }
   });
 
   function onSubmit(data: ProfileFormValues) {
     toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      )
+      title: "Profile updated successfully!",
+      description: "Your sports profile and preferences have been saved.",
     });
   }
 
+  const getNameInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase())
+      .join("")
+      .slice(0, 2);
+  };
+
+  const hasPhoto = profilePhotoPreview || form.watch("photo");
+
   return (
     <Card>
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Profile Photo Section */}
+            <div className="flex flex-col items-center space-y-4">
+              <FormField
+                control={form.control}
+                name="photo"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col items-center">
+                    <div className="relative">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={profilePhotoPreview || field.value} />
+                        <AvatarFallback className="text-lg">
+                          {form.watch("name") ? getNameInitials(form.watch("name") || "") : <CameraIcon className="h-8 w-8" />}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <FormControl>
+                      <div>
+                        <input
+                          {...fileActions.getInputProps()}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={fileActions.openFileDialog}
+                        >
+                          {hasPhoto ? "Update Profile Photo" : "Upload Profile Photo"}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    {fileState.errors.length > 0 && (
+                      <div className="text-sm text-red-500">
+                        {fileState.errors[0]}
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Name Field */}
             <FormField
               control={form.control}
-              name="username"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="shadcn" {...field} />
+                    <Input placeholder="Your display name" {...field} />
                   </FormControl>
                   <FormDescription>
-                    This is your public display name. It can be your real name or a pseudonym. You
-                    can only change this once every 30 days.
+                    This is how other players will see you. It can be your real name or a nickname.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a verified email to display" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="m@example.com">m@example.com</SelectItem>
-                      <SelectItem value="m@google.com">m@google.com</SelectItem>
-                      <SelectItem value="m@support.com">m@support.com</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    You can manage verified email addresses in your{" "}
-                    <Link href="/examples/forms">email settings</Link>.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {/* Bio Field */}
             <FormField
               control={form.control}
               name="bio"
@@ -139,47 +191,164 @@ export default function Page() {
                   <FormLabel>Bio</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Tell us a little bit about yourself"
+                      placeholder="Tell us a little bit about yourself as a player"
                       className="resize-none"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    You can <span>@mention</span> other users and organizations to link to them.
+                    Share your sports experience, preferred playing style, or what you&apos;re looking for in events.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="space-y-2">
-              {fields.map((field, index) => (
-                <FormField
-                  control={form.control}
-                  key={field.id}
-                  name={`urls.${index}.value`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className={cn(index !== 0 && "sr-only")}>URLs</FormLabel>
-                      <FormDescription className={cn(index !== 0 && "sr-only")}>
-                        Add links to your website, blog, or social media profiles.
-                      </FormDescription>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ value: "" })}>
-                Add URL
-              </Button>
+
+            {/* Sports Selection */}
+            <FormField
+              control={form.control}
+              name="sports"
+              render={({ field }) => {
+                const selectedSports = field.value || [];
+                const selectedSportsLabels = selectedSports.map(
+                  (sportId) => SPORTS_OPTIONS.find((sport) => sport.id === sportId)?.label
+                ).filter(Boolean);
+
+                return (
+                  <FormItem>
+                    <FormLabel className="text-base">Sports You Play</FormLabel>
+                    <FormDescription>
+                      Select all the sports you&apos;re interested in playing or would like to join events for.
+                    </FormDescription>
+                    <FormControl>
+                      <Popover open={sportsDropdownOpen} onOpenChange={setSportsDropdownOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={sportsDropdownOpen}
+                            className="w-full justify-between min-h-10 h-auto"
+                          >
+                            <div className="flex flex-wrap gap-1">
+                              {selectedSportsLabels.length > 0 ? (
+                                selectedSportsLabels.map((sport) => (
+                                  <Badge
+                                    key={sport}
+                                    variant="secondary"
+                                    className="text-xs"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const sportId = SPORTS_OPTIONS.find(s => s.label === sport)?.id;
+                                      if (sportId) {
+                                        field.onChange(
+                                          selectedSports.filter((id) => id !== sportId)
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    {sport}
+                                    <XIcon className="ml-1 h-3 w-3 cursor-pointer" />
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-muted-foreground">Select sports...</span>
+                              )}
+                            </div>
+                            <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search sports..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>No sports found.</CommandEmpty>
+                              <CommandGroup>
+                                {SPORTS_OPTIONS.map((sport) => (
+                                  <CommandItem
+                                    key={sport.id}
+                                    value={sport.label}
+                                    onSelect={() => {
+                                      const isSelected = selectedSports.includes(sport.id);
+                                      if (isSelected) {
+                                        field.onChange(
+                                          selectedSports.filter((id) => id !== sport.id)
+                                        );
+                                      } else {
+                                        field.onChange([...selectedSports, sport.id]);
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        checked={selectedSports.includes(sport.id)}
+                                      />
+                                      <span>{sport.label}</span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+
+            {/* Social Links */}
+            <div className="space-y-4">
+              <div>
+                <FormLabel className="text-base">Social Links</FormLabel>
+                <FormDescription>
+                  Add links to your sports-related social media and fitness profiles.
+                </FormDescription>
+              </div>
+              <div className="space-y-2">
+                {fields.map((field, index) => (
+                  <FormField
+                    control={form.control}
+                    key={field.id}
+                    name={`socialLinks.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              placeholder="https://instagram.com/yourprofile" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          {fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => remove(index)}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ value: "" })}
+                >
+                  Add Another Link
+                </Button>
+              </div>
             </div>
-            <Button type="submit">Update profile</Button>
+
+            <Button type="submit" className="w-full">Update Profile</Button>
           </form>
         </Form>
       </CardContent>
