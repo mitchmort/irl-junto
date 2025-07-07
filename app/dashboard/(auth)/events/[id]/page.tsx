@@ -1,5 +1,5 @@
 import { generateMeta } from "@/lib/utils";
-import ProductImageGallery from "./product-image-gallery";
+import EventMapLocation from "./event-map-location";
 import {
   Calendar,
   Clock,
@@ -21,6 +21,7 @@ interface EventData {
   location_address: string;
   location_city: string;
   location_zip: string;
+  venue_name?: string;
   activity_type: string;
   subcategory: string;
   skill_level: 'Beginner' | 'Casual' | 'Intermediate' | 'Advanced' | 'Pro';
@@ -92,6 +93,7 @@ async function getEventData(eventId: string): Promise<EventData> {
     location_address: "123 Sports Center Dr",
     location_city: "San Francisco",
     location_zip: "94102",
+    venue_name: "Downtown Sports Complex",
     activity_type: "Basketball",
     subcategory: "5v5",
     skill_level: "Intermediate",
@@ -289,7 +291,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </div>
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="min-w-0 xl:col-span-1">
-          <ProductImageGallery />
+          <EventMapLocation 
+            address={event.location_address}
+            city={event.location_city}
+            zip={event.location_zip}
+            venueName={event.venue_name}
+          />
         </div>
         <div className="space-y-4 xl:col-span-2">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
