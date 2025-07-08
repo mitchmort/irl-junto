@@ -191,3 +191,109 @@
     @apply cursor-pointer!
   }
 }
+
+/* Mobile-specific styles for event creation */
+@layer components {
+  .event-creation-container {
+    /* Prevent zoom on input focus - iOS Safari */
+    touch-action: manipulation;
+    
+    /* Smooth scrolling */
+    -webkit-overflow-scrolling: touch;
+    
+    /* Prevent text selection on interactive elements */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Touch feedback for interactive elements */
+  .touch-feedback {
+    transition: transform 0.1s ease;
+  }
+
+  .touch-feedback:active {
+    transform: scale(0.98);
+  }
+
+  /* Ensure inputs don't zoom on iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Larger touch targets for mobile */
+  @media (max-width: 768px) {
+    button,
+    .btn,
+    [role="button"] {
+      min-height: 44px; /* Apple's recommended minimum touch target */
+      min-width: 44px;
+    }
+  }
+
+  /* Custom focus styles for better mobile visibility */
+  .focus-visible:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  /* Smooth transitions for mobile interactions */
+  .mobile-transition {
+    transition: all 0.15s ease-in-out;
+  }
+
+  /* Progress bar animations */
+  .progress-bar {
+    transition: width 0.3s ease-in-out;
+  }
+
+  /* Card hover/active states optimized for touch */
+  .selection-card {
+    transition: all 0.2s ease;
+  }
+
+  .selection-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .selection-card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .selection-card {
+    border-width: 2px;
+  }
+  
+  .selection-card[aria-pressed="true"] {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -142,12 +143,15 @@ export const columns: ColumnDef<Event>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="flex items-center gap-4">
+      <Link 
+        href={`/dashboard/events/${row.original.id}`} 
+        className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+      >
         <figure className="flex items-center justify-center w-12 h-12 rounded-lg border bg-muted">
           <span className="text-lg">{getSportIcon(row.original.sport_type)}</span>
         </figure>
         <div className="font-medium">{row.getValue("name")}</div>
-      </div>
+      </Link>
     )
   },
   {
@@ -314,7 +318,11 @@ export const columns: ColumnDef<Event>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/events/${row.original.id}`}>
+                View Details
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>Edit Event</DropdownMenuItem>
             <DropdownMenuItem>Share Link</DropdownMenuItem>
             <DropdownMenuItem>Cancel Event</DropdownMenuItem>
@@ -324,6 +332,91 @@ export const columns: ColumnDef<Event>[] = [
     }
   }
 ];
+
+// Mobile Event Card Component
+const MobileEventCard = ({ event }: { event: Event }) => {
+  return (
+    <div className="bg-white rounded-lg border p-4 space-y-3" role="article" aria-label={`Event: ${event.name}`}>
+      {/* Event Name with Sport Icon - Clickable */}
+      <Link 
+        href={`/dashboard/events/${event.id}`}
+        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        aria-label={`View details for ${event.name}`}
+      >
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg border bg-muted" aria-hidden="true">
+          <span className="text-lg">{getSportIcon(event.sport_type)}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium truncate">{event.name}</h3>
+        </div>
+      </Link>
+
+      {/* Date & Time */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Calendar className="size-4" />
+        <span>{formatDateTime(event.date, event.time)}</span>
+      </div>
+
+      {/* Location */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <MapPin className="size-4" />
+        <span className="truncate" title={event.venue_name}>
+          {event.venue_name}
+        </span>
+      </div>
+
+      {/* Bottom Row: Participants, Role, Status, Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {/* Participants */}
+          <div className="flex items-center gap-1 text-sm">
+            <Users className="size-4 text-muted-foreground" />
+            <span>{event.participants_current}/{event.participants_max}</span>
+          </div>
+
+          {/* Role Badge */}
+          <Badge variant={event.my_role === "Organizer" ? "default" : "secondary"} className="text-xs">
+            {event.my_role}
+          </Badge>
+
+          {/* Status Badge */}
+          <Badge 
+            variant={
+              event.status === "upcoming" ? "default" :
+              event.status === "full" ? "warning" :
+              event.status === "completed" ? "secondary" : "destructive"
+            } 
+            className="text-xs capitalize"
+          >
+            {event.status}
+          </Badge>
+        </div>
+
+        {/* Actions Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/events/${event.id}`}>
+                View Details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>Edit Event</DropdownMenuItem>
+            <DropdownMenuItem>Share Link</DropdownMenuItem>
+            <DropdownMenuItem>Cancel Event</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+};
 
 export default function EventList({ data }: { data: Event[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -579,7 +672,8 @@ export default function EventList({ data }: { data: Event[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-4">
+        {/* Desktop Header */}
+        <div className="hidden md:flex items-center gap-4">
           <div className="flex gap-2">
             <Input
               placeholder="Search events..."
@@ -587,24 +681,7 @@ export default function EventList({ data }: { data: Event[] }) {
               onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
               className="max-w-sm"
             />
-            <div className="hidden gap-2 md:flex">
-              <Filters />
-            </div>
-            {/*filter for mobile*/}
-            <div className="inline md:hidden">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <FilterIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-60 p-4">
-                  <div className="grid space-y-2">
-                    <Filters />
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <Filters />
           </div>
           <div className="ms-auto flex gap-2">
             <DropdownMenu>
@@ -632,68 +709,140 @@ export default function EventList({ data }: { data: Event[] }) {
             </DropdownMenu>
           </div>
         </div>
+
+        {/* Mobile Header */}
+        <div className="md:hidden space-y-3">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Search events..."
+              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+              onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+              className="flex-1"
+            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <FilterIcon />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4">
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Filters</h4>
+                  <div className="space-y-3">
+                    <Filters />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="w-full space-y-4">
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <div className="rounded-lg border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </TableHead>
+                        );
+                      })}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No events found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow 
+                        key={row.id} 
+                        data-state={row.getIsSelected() && "selected"}
+                        className="hover:bg-muted/50 transition-colors"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="h-24 text-center">
+                        No events found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex items-center justify-end space-x-2">
+              <div className="text-muted-foreground flex-1 text-sm">
+                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} row(s) selected.
+              </div>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}>
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}>
+                  Next
+                </Button>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center justify-end space-x-2">
-            <div className="text-muted-foreground flex-1 text-sm">
-              {table.getFilteredSelectedRowModel().rows.length} of{" "}
-              {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}>
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}>
-                Next
-              </Button>
-            </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {table.getRowModel().rows?.length ? (
+              <>
+                <div className="space-y-3">
+                  {table.getRowModel().rows.map((row) => (
+                    <MobileEventCard key={row.id} event={row.original} />
+                  ))}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-muted-foreground text-sm">
+                    {table.getFilteredRowModel().rows.length} event(s)
+                  </div>
+                  <div className="space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}>
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}>
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No events found.</p>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

@@ -375,7 +375,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
                   </Table>
                 </div>
               </div>
-              <div className="grid auto-cols-max grid-flow-row gap-8">
+              <div className="space-y-8">
                 <div>
                   <div className="mb-4 font-semibold">Who&apos;s Coming ({confirmedParticipants.length}/{event.max_participants}):</div>
                   <div className="flex flex-wrap gap-2">
