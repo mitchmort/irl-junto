@@ -115,8 +115,8 @@ export function LocationSelectionStep() {
             <div className="text-center space-y-3">
               <MapPin className="h-6 w-6 text-muted-foreground mx-auto" />
               <div>
-                <p className="font-medium">Can't find your venue?</p>
-                <p className="text-sm text-muted-foreground">Use "{searchQuery}" as location</p>
+                <p className="font-medium">Can&apos;t find your venue?</p>
+                <p className="text-sm text-muted-foreground">Use &quot;{searchQuery}&quot; as location</p>
               </div>
               <Button onClick={handleManualEntry} className="w-full">
                 Use This Location

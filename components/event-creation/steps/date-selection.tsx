@@ -66,9 +66,9 @@ export function DateSelectionStep() {
     }
   };
 
-  const isDateSelected = (date: Date) => {
-    return formData.date && 
-           format(formData.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+  const isDateSelected = (date: Date): boolean => {
+    return !!(formData.date && 
+           format(formData.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
   };
 
   return (

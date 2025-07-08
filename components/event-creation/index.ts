@@ -13,4 +13,4 @@ export { TimeSelectionStep } from './steps/time-selection';
 export { PlayerCountStep } from './steps/player-count';
 export { LocationSelectionStep } from './steps/location-selection';
 export { CostSelectionStep } from './steps/cost-selection';
-export { AdditionalDetailsStep } from './steps/additional-details';
+export { EventSummaryStep } from './steps/event-summary';

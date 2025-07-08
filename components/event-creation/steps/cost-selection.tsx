@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useEventCreationStore } from "@/store/event-creation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { DollarSign, Calendar, Clock, MapPin, Users } from "lucide-react";
-import { format } from "date-fns";
+import { DollarSign } from "lucide-react";
 
 const quickCostOptions = [
   { value: 0, label: 'Free' },
@@ -20,19 +20,16 @@ const quickCostOptions = [
 ];
 
 export function CostSelectionStep() {
-  const { formData, updateField, nextStep, validateCurrentStep } = useEventCreationStore();
+  const { formData, updateFormData, nextStep, validateCurrentStep } = useEventCreationStore();
   const [customAmount, setCustomAmount] = useState('');
   const [isCustom, setIsCustom] = useState(false);
+  const [equipment, setEquipment] = useState(formData.equipment || '');
+  const [arrivalInstructions, setArrivalInstructions] = useState(formData.arrivalInstructions || '');
 
   const handleQuickCostSelect = (cost: number) => {
-    updateField('cost', cost);
+    updateFormData({ cost });
     setIsCustom(false);
     setCustomAmount('');
-    
-    // Auto-advance for quick selections
-    setTimeout(() => {
-      nextStep();
-    }, 150);
   };
 
   const handleCustomCostSelect = () => {
@@ -46,59 +43,48 @@ export function CostSelectionStep() {
     
     const numericValue = parseFloat(cleanValue);
     if (!isNaN(numericValue) && numericValue >= 0) {
-      updateField('cost', numericValue);
+      updateFormData({ cost: numericValue });
     }
   };
 
+  const handleEquipmentChange = (value: string) => {
+    setEquipment(value);
+    updateFormData({ equipment: value });
+  };
+
+  const handleArrivalChange = (value: string) => {
+    setArrivalInstructions(value);
+    updateFormData({ arrivalInstructions: value });
+  };
+
   const handleNext = () => {
+    // Update final details before proceeding
+    updateFormData({
+      equipment: equipment.trim(),
+      arrivalInstructions: arrivalInstructions.trim()
+    });
+    
     if (validateCurrentStep()) {
       nextStep();
     }
   };
 
-  const getSportDisplayName = () => {
-    const sportNames = {
-      basketball: 'Basketball',
-      tennis: 'Tennis', 
-      pickleball: 'Pickleball',
-      volleyball: 'Volleyball',
-      soccer: 'Soccer',
-      climbing: 'Rock Climbing'
-    };
-    return sportNames[formData.sport as keyof typeof sportNames] || 'Event';
-  };
-
-  const getFormatDisplay = () => {
-    return formData.isCustomFormat ? formData.customFormatText : formData.format;
-  };
-
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours), parseInt(minutes));
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const playersNeeded = formData.totalPlayers - formData.playersConfirmed;
-
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold">
-          Cost per person?
+          Cost & Details
         </h1>
         <p className="text-muted-foreground">
-          Set the price for your event
+          Set pricing and optional details
         </p>
       </div>
 
       <div className="space-y-6">
-        {/* Quick Cost Options */}
+        {/* Cost Selection */}
         <div className="space-y-3">
+          <Label className="text-base font-medium">Cost per person</Label>
+          
           <div className="grid grid-cols-3 gap-2">
             {quickCostOptions.map((option) => (
               <Button
@@ -111,85 +97,89 @@ export function CostSelectionStep() {
               </Button>
             ))}
           </div>
-        </div>
 
-        {/* Custom Amount */}
-        <Card className={`p-4 cursor-pointer transition-all duration-200 ${
-          isCustom ? 'ring-2 ring-primary border-primary' : 'hover:border-primary'
-        }`} onClick={handleCustomCostSelect}>
-          <div className="flex items-center gap-4">
-            <DollarSign className="h-6 w-6 text-muted-foreground" />
-            <div className="flex-1">
-              <Label className="text-base font-medium">Other amount</Label>
-              {isCustom ? (
-                <Input
-                  type="text"
-                  placeholder="0.00"
-                  value={customAmount}
-                  onChange={(e) => handleCustomAmountChange(e.target.value)}
-                  className="mt-2 text-lg h-12"
-                  autoFocus
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Enter custom amount
-                </p>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Separator />
-
-        {/* Event Summary */}
-        <div className="space-y-3">
-          <Label className="text-base font-medium flex items-center gap-2">
-            📋 Event Summary
-          </Label>
-          
-          <Card className="p-4 space-y-3">
-            <div className="space-y-2">
-              <h3 className="font-semibold text-lg">
-                {getSportDisplayName()} {getFormatDisplay()}
-              </h3>
-              
-              <div className="space-y-1 text-sm text-muted-foreground">
-                {formData.date && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{format(formData.date, 'EEE, MMM d')}</span>
-                    {formData.startTime && (
-                      <>
-                        <Clock className="h-4 w-4 ml-2" />
-                        <span>{formatTime(formData.startTime)}</span>
-                      </>
-                    )}
-                  </div>
+          {/* Custom Amount */}
+          <Card className={`p-4 cursor-pointer transition-all duration-200 ${
+            isCustom ? 'ring-2 ring-primary border-primary' : 'hover:border-primary'
+          }`} onClick={handleCustomCostSelect}>
+            <div className="flex items-center gap-4">
+              <DollarSign className="h-6 w-6 text-muted-foreground" />
+              <div className="flex-1">
+                <Label className="text-base font-medium">Other amount</Label>
+                {isCustom ? (
+                  <Input
+                    type="text"
+                    placeholder="0.00"
+                    value={customAmount}
+                    onChange={(e) => handleCustomAmountChange(e.target.value)}
+                    className="mt-2 text-lg h-12"
+                    autoFocus
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Enter custom amount
+                  </p>
                 )}
-                
-                {formData.location && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span className="truncate">{formData.location.name}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  <span>
-                    {playersNeeded > 0 
-                      ? `Need ${playersNeeded} more player${playersNeeded === 1 ? '' : 's'}`
-                      : 'Event full'
-                    }
-                  </span>
-                  <span className="text-xs">•</span>
-                  <span>
-                    {formData.cost === 0 ? 'Free' : `$${formData.cost} each`}
-                  </span>
-                </div>
               </div>
             </div>
           </Card>
+        </div>
+
+        <Separator />
+
+        {/* Optional Details */}
+        <div className="space-y-4">
+          <Label className="text-base font-medium">
+            Optional Details
+          </Label>
+          
+          {/* Equipment Section */}
+          <div className="space-y-2">
+            <Label htmlFor="equipment" className="text-sm">
+              Equipment needed
+            </Label>
+            <Textarea
+              id="equipment"
+              placeholder="e.g., Bring your own basketball"
+              value={equipment}
+              onChange={(e) => handleEquipmentChange(e.target.value)}
+              maxLength={100}
+              rows={2}
+              className="resize-none"
+            />
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-muted-foreground">
+                Let players know what to bring
+              </p>
+              <Badge variant="outline" className="text-xs">
+                {equipment.length}/100
+              </Badge>
+            </div>
+          </div>
+
+          {/* Arrival Instructions Section */}
+          <div className="space-y-2">
+            <Label htmlFor="arrival" className="text-sm">
+              Arrival instructions
+            </Label>
+            <Textarea
+              id="arrival"
+              placeholder="e.g., Meet at the main entrance"
+              value={arrivalInstructions}
+              onChange={(e) => handleArrivalChange(e.target.value)}
+              maxLength={100}
+              rows={2}
+              className="resize-none"
+            />
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-muted-foreground">
+                Help players find the right spot
+              </p>
+              <Badge variant="outline" className="text-xs">
+                {arrivalInstructions.length}/100
+              </Badge>
+            </div>
+          </div>
         </div>
       </div>
 

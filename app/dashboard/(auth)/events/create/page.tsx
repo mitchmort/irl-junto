@@ -7,7 +7,7 @@ import { useEventCreationStore } from "@/store/event-creation";
 import { CreationHeader } from "@/components/event-creation/creation-header";
 import { StepSkeleton } from "@/components/event-creation/step-skeleton";
 
-// Step components (will be created next)
+// Step components
 import { SportSelectionStep } from "@/components/event-creation/steps/sport-selection";
 import { FormatSelectionStep } from "@/components/event-creation/steps/format-selection";
 import { SkillLevelStep } from "@/components/event-creation/steps/skill-level";
@@ -16,7 +16,7 @@ import { TimeSelectionStep } from "@/components/event-creation/steps/time-select
 import { PlayerCountStep } from "@/components/event-creation/steps/player-count";
 import { LocationSelectionStep } from "@/components/event-creation/steps/location-selection";
 import { CostSelectionStep } from "@/components/event-creation/steps/cost-selection";
-import { AdditionalDetailsStep } from "@/components/event-creation/steps/additional-details";
+import { EventSummaryStep } from "@/components/event-creation/steps/event-summary";
 
 function EventCreationContent() {
   const router = useRouter();
@@ -72,8 +72,8 @@ function EventCreationContent() {
       5: "Time & Duration",
       6: "Player Count",
       7: "Location",
-      8: "Cost",
-      9: "Final Details"
+      8: "Cost & Details",
+      9: "Review & Create"
     };
     return titles[step as keyof typeof titles] || "";
   };
@@ -97,7 +97,7 @@ function EventCreationContent() {
       case 8:
         return <CostSelectionStep />;
       case 9:
-        return <AdditionalDetailsStep />;
+        return <EventSummaryStep />;
       default:
         return <div>Invalid step</div>;
     }
