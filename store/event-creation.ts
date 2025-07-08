@@ -37,12 +37,9 @@ export interface EventCreationFormData {
   // Step 7: Location
   location: EventLocation | null;
   
-  // Step 8: Cost
+  // Step 8: Cost & Details
   cost: number; // 0 for free
-  
-  // Step 9: Additional Details
-  equipment?: string;
-  arrivalInstructions?: string;
+  additionalDetails?: string;
 }
 
 interface EventCreationStore {
@@ -57,6 +54,10 @@ interface EventCreationStore {
   // Loading states
   isSubmitting: boolean;
   isValidatingStep: boolean;
+  
+  // Success state
+  createdEventId: string | null;
+  showSuccessScreen: boolean;
   
   // Actions
   updateField: <K extends keyof EventCreationFormData>(
@@ -76,6 +77,8 @@ interface EventCreationStore {
   
   setSubmitting: (isSubmitting: boolean) => void;
   setValidating: (isValidating: boolean) => void;
+  setCreatedEventId: (eventId: string | null) => void;
+  setShowSuccessScreen: (show: boolean) => void;
   
   resetForm: () => void;
   
@@ -97,8 +100,7 @@ const initialFormData: EventCreationFormData = {
   playersConfirmed: 1, // Including organizer
   location: null,
   cost: 0, // Free by default
-  equipment: '',
-  arrivalInstructions: ''
+  additionalDetails: ''
 };
 
 export const useEventCreationStore = create<EventCreationStore>()(
@@ -111,6 +113,8 @@ export const useEventCreationStore = create<EventCreationStore>()(
       completedSteps: new Set<number>(),
       isSubmitting: false,
       isValidatingStep: false,
+      createdEventId: null,
+      showSuccessScreen: false,
 
       // Form data actions
       updateField: (field, value) => {
@@ -171,6 +175,8 @@ export const useEventCreationStore = create<EventCreationStore>()(
       // Loading states
       setSubmitting: (isSubmitting) => set({ isSubmitting }),
       setValidating: (isValidating) => set({ isValidatingStep: isValidating }),
+      setCreatedEventId: (eventId) => set({ createdEventId: eventId }),
+      setShowSuccessScreen: (show) => set({ showSuccessScreen: show }),
 
       // Validation
       validateCurrentStep: () => {
@@ -271,7 +277,9 @@ export const useEventCreationStore = create<EventCreationStore>()(
           currentStep: 1,
           completedSteps: new Set<number>(),
           isSubmitting: false,
-          isValidatingStep: false
+          isValidatingStep: false,
+          createdEventId: null,
+          showSuccessScreen: false
         });
       }
     }),

@@ -24,7 +24,7 @@ export function CreationHeader({
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-md border-b z-50 safe-area-top">
+    <header className="fixed top-0 left-0 right-0 md:left-64 bg-background/95 backdrop-blur-md border-b z-50 safe-area-top">
       <div className="flex items-center justify-between p-4">
         <Button
           variant="ghost"

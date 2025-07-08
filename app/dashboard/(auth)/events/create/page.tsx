@@ -17,6 +17,7 @@ import { PlayerCountStep } from "@/components/event-creation/steps/player-count"
 import { LocationSelectionStep } from "@/components/event-creation/steps/location-selection";
 import { CostSelectionStep } from "@/components/event-creation/steps/cost-selection";
 import { EventSummaryStep } from "@/components/event-creation/steps/event-summary";
+import { SuccessScreen } from "@/components/event-creation/success-screen";
 
 function EventCreationContent() {
   const router = useRouter();
@@ -28,7 +29,10 @@ function EventCreationContent() {
     setCurrentStep,
     previousStep,
     resetForm,
-    canAdvanceToStep
+    canAdvanceToStep,
+    showSuccessScreen,
+    createdEventId,
+    formData
   } = useEventCreationStore();
 
   // Sync URL with current step
@@ -102,6 +106,31 @@ function EventCreationContent() {
         return <div>Invalid step</div>;
     }
   };
+
+  // Show success screen if event was created
+  if (showSuccessScreen && createdEventId) {
+    return (
+      <div className="min-h-screen bg-background event-creation-container">
+        <main className="pt-8 px-4 pb-8 safe-area-bottom">
+          <div className="max-w-md mx-auto">
+            <SuccessScreen 
+              eventData={{
+                id: createdEventId,
+                sport: formData.sport,
+                format: formData.isCustomFormat ? formData.customFormatText || '' : formData.format,
+                date: formData.date || new Date(),
+                startTime: formData.startTime,
+                location: formData.location || { name: '' },
+                totalPlayers: formData.totalPlayers,
+                playersConfirmed: formData.playersConfirmed,
+                cost: formData.cost
+              }}
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background event-creation-container">

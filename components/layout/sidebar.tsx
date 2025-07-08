@@ -61,7 +61,7 @@ export default function Sidebar() {
                 <SidebarMenuButton className="hover:text-foreground rounded-none group-data-[collapsible=icon]:px-0! hover:bg-[var(--primary)]/10">
                   <Logo />
                   <div className="truncate font-semibold group-data-[collapsible=icon]:hidden">
-                    Shadcn UI Kit
+                    Junto
                   </div>
                   <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
                 </SidebarMenuButton>
@@ -206,15 +206,15 @@ export default function Sidebar() {
       <SidebarFooter>
         <Card className="bg-muted gap-4 overflow-hidden py-4 group-data-[collapsible=icon]:hidden">
           <CardHeader className="px-3">
-            <CardTitle>Upgrade to Pro</CardTitle>
+            <CardTitle>Create an Event</CardTitle>
             <CardDescription>
-              Get pro now to own all dashboards, templates and components for life.
+              Start organizing games in 30 seconds. Share one link and show up to play.
             </CardDescription>
           </CardHeader>
           <CardContent className="px-3">
             <Button className="w-full" asChild>
-              <Link href="https://shadcnuikit.com/pricing" target="_blank">
-                Get Shadcn UI Kit
+              <Link href="/dashboard/events/create?step=1">
+                Organize Event
               </Link>
             </Button>
           </CardContent>

@@ -23,8 +23,7 @@ export function CostSelectionStep() {
   const { formData, updateFormData, nextStep, validateCurrentStep } = useEventCreationStore();
   const [customAmount, setCustomAmount] = useState('');
   const [isCustom, setIsCustom] = useState(false);
-  const [equipment, setEquipment] = useState(formData.equipment || '');
-  const [arrivalInstructions, setArrivalInstructions] = useState(formData.arrivalInstructions || '');
+  const [additionalDetails, setAdditionalDetails] = useState(formData.additionalDetails || '');
 
   const handleQuickCostSelect = (cost: number) => {
     updateFormData({ cost });
@@ -47,21 +46,15 @@ export function CostSelectionStep() {
     }
   };
 
-  const handleEquipmentChange = (value: string) => {
-    setEquipment(value);
-    updateFormData({ equipment: value });
-  };
-
-  const handleArrivalChange = (value: string) => {
-    setArrivalInstructions(value);
-    updateFormData({ arrivalInstructions: value });
+  const handleAdditionalDetailsChange = (value: string) => {
+    setAdditionalDetails(value);
+    updateFormData({ additionalDetails: value });
   };
 
   const handleNext = () => {
     // Update final details before proceeding
     updateFormData({
-      equipment: equipment.trim(),
-      arrivalInstructions: arrivalInstructions.trim()
+      additionalDetails: additionalDetails.trim()
     });
     
     if (validateCurrentStep()) {
@@ -129,54 +122,25 @@ export function CostSelectionStep() {
 
         {/* Optional Details */}
         <div className="space-y-4">
-          <Label className="text-base font-medium">
-            Optional Details
-          </Label>
-          
-          {/* Equipment Section */}
           <div className="space-y-2">
-            <Label htmlFor="equipment" className="text-sm">
-              Equipment needed
+            <Label htmlFor="details" className="text-base font-medium">
+              Additional details <span className="text-sm font-normal text-muted-foreground">(optional)</span>
             </Label>
             <Textarea
-              id="equipment"
-              placeholder="e.g., Bring your own basketball"
-              value={equipment}
-              onChange={(e) => handleEquipmentChange(e.target.value)}
-              maxLength={100}
-              rows={2}
+              id="details"
+              placeholder="e.g., Bring your own basketball, meet at the main entrance"
+              value={additionalDetails}
+              onChange={(e) => handleAdditionalDetailsChange(e.target.value)}
+              maxLength={200}
+              rows={3}
               className="resize-none"
             />
             <div className="flex justify-between items-center">
               <p className="text-xs text-muted-foreground">
-                Let players know what to bring
+                Equipment needed, arrival instructions, or other important info
               </p>
               <Badge variant="outline" className="text-xs">
-                {equipment.length}/100
-              </Badge>
-            </div>
-          </div>
-
-          {/* Arrival Instructions Section */}
-          <div className="space-y-2">
-            <Label htmlFor="arrival" className="text-sm">
-              Arrival instructions
-            </Label>
-            <Textarea
-              id="arrival"
-              placeholder="e.g., Meet at the main entrance"
-              value={arrivalInstructions}
-              onChange={(e) => handleArrivalChange(e.target.value)}
-              maxLength={100}
-              rows={2}
-              className="resize-none"
-            />
-            <div className="flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">
-                Help players find the right spot
-              </p>
-              <Badge variant="outline" className="text-xs">
-                {arrivalInstructions.length}/100
+                {additionalDetails.length}/200
               </Badge>
             </div>
           </div>

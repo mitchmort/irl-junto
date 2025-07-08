@@ -22,14 +22,22 @@ import {
   Navigation
 } from "lucide-react";
 import { format } from "date-fns";
+import { useEvents } from "@/hooks/use-events";
+import { useAuth } from "@/hooks/use-auth";
+import { transformFormDataToSupabase, validateEventFormData, generateShareLink } from "@/lib/event-creation-utils";
+import { supabase } from "@/lib/supabase";
 
 export function EventSummaryStep() {
   const router = useRouter();
+  const { createEvent } = useEvents();
+  const { user } = useAuth();
   const { 
     formData, 
     setSubmitting, 
     isSubmitting,
-    resetForm 
+    resetForm,
+    setCreatedEventId,
+    setShowSuccessScreen 
   } = useEventCreationStore();
   
   const [isCreating, setIsCreating] = useState(false);
@@ -88,29 +96,73 @@ export function EventSummaryStep() {
   const playersNeeded = formData.totalPlayers - formData.playersConfirmed;
 
   const submitEvent = async () => {
+    // Validate user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create an event.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate form data
+    const validationErrors = validateEventFormData(formData);
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: validationErrors[0],
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsCreating(true);
     setSubmitting(true);
     
     try {
-      // TODO: Replace with actual Supabase submission
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Transform form data to Supabase format
+      const eventData = transformFormDataToSupabase(formData, user.id);
       
-      // Show success message
+      // Create event in Supabase
+      const createdEvent = await createEvent(eventData);
+      
+      if (!createdEvent) {
+        throw new Error('Failed to create event');
+      }
+      
+      // Add organizer as first participant
+      try {
+        await supabase
+          .from('event_participants')
+          .insert({
+            event_id: createdEvent.id,
+            user_id: user.id,
+            status: 'confirmed',
+            role: 'organizer'
+          });
+      } catch (participantError) {
+        console.warn('Failed to add organizer as participant:', participantError);
+        // Don't fail the whole operation if participant creation fails
+      }
+      
+      // Generate share link and update event if needed
+      const shareLink = generateShareLink(createdEvent.id);
+      
+      // Set the created event ID and show success screen
+      setCreatedEventId(createdEvent.id.toString());
+      setShowSuccessScreen(true);
+      
       toast({
         title: "Event Created!",
         description: "Your event has been successfully created and is ready to share.",
       });
       
-      // Reset form and redirect
-      resetForm();
-      router.push('/dashboard/events?created=true');
-      
     } catch (error) {
       console.error('Error creating event:', error);
       toast({
         title: "Error",
-        description: "Failed to create event. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create event. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -248,34 +300,18 @@ export function EventSummaryStep() {
             </div>
           </div>
 
-          {/* Optional Details */}
-          {(formData.equipment || formData.arrivalInstructions) && (
+          {/* Additional Details */}
+          {formData.additionalDetails && (
             <>
               <Separator />
-              <div className="space-y-3">
-                {formData.equipment && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
-                      <Trophy className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Equipment needed</p>
-                      <p className="text-sm text-muted-foreground">{formData.equipment}</p>
-                    </div>
-                  </div>
-                )}
-
-                {formData.arrivalInstructions && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
-                      <Navigation className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Arrival instructions</p>
-                      <p className="text-sm text-muted-foreground">{formData.arrivalInstructions}</p>
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                  <FileText className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Additional details</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formData.additionalDetails}</p>
+                </div>
               </div>
             </>
           )}
