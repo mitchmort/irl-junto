@@ -379,4 +379,9 @@ export type User = Tables<"users">
 export type UserInsert = TablesInsert<"users">
 export type UserUpdate = TablesUpdate<"users">
 
-export type DashboardKPIs = Tables<"dashboard_kpis"> 
+export type DashboardKPIs = Tables<"dashboard_kpis">
+
+// Type for event participant with joined profile data
+export type EventParticipantWithProfile = EventParticipant & {
+  profiles: Profile | null;
+} 

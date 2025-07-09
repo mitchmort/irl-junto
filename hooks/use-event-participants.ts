@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { supabase, EventParticipant, EventParticipantInsert, EventParticipantUpdate } from '@/lib/supabase'
+import { supabase, EventParticipant, EventParticipantInsert, EventParticipantUpdate, EventParticipantWithProfile } from '@/lib/supabase'
 
 export const useEventParticipants = (eventId: number) => {
-  const [participants, setParticipants] = useState<EventParticipant[]>([])
+  const [participants, setParticipants] = useState<EventParticipantWithProfile[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -15,7 +15,7 @@ export const useEventParticipants = (eventId: number) => {
         .from('event_participants')
         .select(`
           *,
-          profile:profiles(*)
+          profiles(*)
         `)
         .eq('event_id', eventId)
         .order('created_at', { ascending: true })
@@ -29,7 +29,7 @@ export const useEventParticipants = (eventId: number) => {
     }
   }
 
-  const joinEvent = async (participantData?: Partial<EventParticipantInsert>): Promise<EventParticipant | null> => {
+  const joinEvent = async (participantData?: Partial<EventParticipantInsert>): Promise<EventParticipantWithProfile | null> => {
     setLoading(true)
     setError(null)
     
@@ -50,7 +50,7 @@ export const useEventParticipants = (eventId: number) => {
         .insert(insertData)
         .select(`
           *,
-          profile:profiles(*)
+          profiles(*)
         `)
         .single()
       
@@ -100,7 +100,7 @@ export const useEventParticipants = (eventId: number) => {
   const updateParticipantStatus = async (
     userId: string, 
     updates: EventParticipantUpdate
-  ): Promise<EventParticipant | null> => {
+  ): Promise<EventParticipantWithProfile | null> => {
     setLoading(true)
     setError(null)
     
@@ -112,7 +112,7 @@ export const useEventParticipants = (eventId: number) => {
         .eq('user_id', userId)
         .select(`
           *,
-          profile:profiles(*)
+          profiles(*)
         `)
         .single()
       

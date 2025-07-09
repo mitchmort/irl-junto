@@ -1,5 +1,42 @@
 import { EventCreationFormData } from '@/store/event-creation';
 import { EventInsert } from '@/types/database';
+import { format } from 'date-fns';
+
+/**
+ * Generates an enhanced event title in the format "Day Period Activity Subcategory"
+ * Example: "Tuesday Morning Tennis Doubles"
+ */
+export function generateEnhancedEventTitle(formData: EventCreationFormData): string {
+  if (!formData.date || !formData.startTime || !formData.sport) {
+    return 'Event'; // Fallback for incomplete data
+  }
+
+  // Get day name
+  const dayName = format(formData.date, 'EEEE');
+  
+  // Get time period based on start time
+  const [hours] = formData.startTime.split(':');
+  const hour = parseInt(hours);
+  let timePeriod = '';
+  
+  if (hour >= 5 && hour < 12) {
+    timePeriod = 'Morning';
+  } else if (hour >= 12 && hour < 17) {
+    timePeriod = 'Afternoon';
+  } else {
+    timePeriod = 'Evening';
+  }
+  
+  // Get activity (capitalize first letter)
+  const activity = formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1);
+  
+  // Get subcategory (format)
+  const subcategory = formData.isCustomFormat 
+    ? formData.customFormatText || 'Game'
+    : formData.format;
+  
+  return `${dayName} ${timePeriod} ${activity} ${subcategory}`;
+}
 
 /**
  * Transforms form data from the event creation flow into the format expected by Supabase
@@ -8,13 +45,21 @@ export function transformFormDataToSupabase(
   formData: EventCreationFormData,
   organizerId: string
 ): EventInsert {
-  // Generate event title from sport and format
+  // Generate event title from sport and format (legacy function for backward compatibility)
   const getEventTitle = (): string => {
     const sport = formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1);
     const format = formData.isCustomFormat 
       ? formData.customFormatText || 'Custom Game'
       : formData.format;
     return `${sport} ${format}`;
+  };
+
+  // Get the final title - use custom title if set, otherwise generate enhanced title
+  const getFinalTitle = (): string => {
+    if (formData.isCustomTitle && formData.title) {
+      return formData.title;
+    }
+    return generateEnhancedEventTitle(formData);
   };
 
   // Convert duration from minutes to a string format
@@ -93,7 +138,7 @@ export function transformFormDataToSupabase(
 
   // Transform the data
   const eventData: EventInsert = {
-    title: getEventTitle(),
+    title: getFinalTitle(),
     sport: formData.sport,
     sub_type: formData.isCustomFormat ? formData.customFormatText || null : formData.format,
     skill_levels: JSON.stringify([formData.skillLevel]), // Store as array in JSON
@@ -121,7 +166,7 @@ export function transformFormDataToSupabase(
  * Generates a shareable link for an event
  */
 export function generateShareLink(eventId: number, baseUrl?: string): string {
-  const base = baseUrl || typeof window !== 'undefined' ? window.location.origin : 'https://junto.app';
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://junto.app');
   return `${base}/event/${eventId}`;
 }
 

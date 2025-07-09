@@ -11,20 +11,29 @@ interface EventMapLocationProps {
   city: string;
   zip: string;
   venueName?: string;
+  fullAddress?: string; // Add full address prop for better map accuracy
 }
 
 export default function EventMapLocation({ 
   address, 
   city, 
   zip, 
-  venueName 
+  venueName,
+  fullAddress 
 }: EventMapLocationProps) {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
 
   // Construct full address for display and encoding
-  const fullAddress = `${address}, ${city} ${zip}`;
-  const encodedAddress = encodeURIComponent(fullAddress);
+  // Use provided fullAddress if available, otherwise construct from parts
+  const displayAddress = fullAddress || `${address}, ${city} ${zip}`.replace(/,\s*$/, '').replace(/,\s*,/g, ',');
+  
+  // Don't encode if address is empty or invalid
+  if (!displayAddress || displayAddress.trim() === '' || displayAddress.trim() === ',') {
+    console.warn('Empty or invalid address provided for map');
+  }
+  
+  const encodedAddress = encodeURIComponent(displayAddress || 'Location not specified');
 
   // Google Maps API key from environment variables
   const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -36,10 +45,17 @@ export default function EventMapLocation({
     console.log('Google Maps API key loaded successfully');
   }
   
+  // Debug logging
+  console.log('Map component received:', { address, city, zip, venueName, fullAddress });
+  console.log('Display address:', displayAddress);
+  console.log('Encoded address:', encodedAddress);
+  
   // Google Maps embed URL with API key for enhanced functionality
   const mapEmbedUrl = GOOGLE_MAPS_API_KEY 
-    ? `https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${encodedAddress}&zoom=15&maptype=roadmap&center=${encodedAddress}`
+    ? `https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${encodedAddress}&zoom=15&maptype=roadmap`
     : `https://maps.google.com/maps?q=${encodedAddress}&t=&z=15&ie=UTF8&iwloc=&output=embed`; // Fallback without API key
+  
+  console.log('Map embed URL:', mapEmbedUrl);
 
   // Handle map load success
   const handleMapLoad = () => {
@@ -57,7 +73,7 @@ export default function EventMapLocation({
   const copyAddressToClipboard = async () => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(fullAddress);
+        await navigator.clipboard.writeText(displayAddress);
         toast({
           title: "Address copied!",
           description: "Event address has been copied to your clipboard.",
@@ -65,7 +81,7 @@ export default function EventMapLocation({
       } else {
         // Fallback for older browsers
         const textArea = document.createElement("textarea");
-        textArea.value = fullAddress;
+        textArea.value = displayAddress;
         textArea.style.position = "fixed";
         textArea.style.left = "-999999px";
         textArea.style.top = "-999999px";
@@ -97,7 +113,7 @@ export default function EventMapLocation({
   };
 
   return (
-    <div className="sticky top-20 space-y-4">
+    <div className="sticky top-20 space-y-3">
       {/* Google Maps Embed Card */}
       <Card>
         <CardContent className="p-0">
@@ -110,12 +126,15 @@ export default function EventMapLocation({
               </div>
             )}
             
-            {mapError || !GOOGLE_MAPS_API_KEY ? (
+            {mapError || !GOOGLE_MAPS_API_KEY || !displayAddress || displayAddress.trim() === '' || displayAddress.trim() === ',' ? (
               <div className="flex h-full items-center justify-center bg-muted rounded-lg">
                 <div className="text-center space-y-2">
                   <MapPin className="size-8 text-muted-foreground mx-auto" />
                   <p className="text-sm text-muted-foreground">
-                    {!GOOGLE_MAPS_API_KEY ? 'Map configuration needed' : 'Map unavailable'}
+                    {!GOOGLE_MAPS_API_KEY ? 'Map temporarily unavailable' : 'Unable to load map'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Use the address below to find directions
                   </p>
                 </div>
               </div>
@@ -130,7 +149,7 @@ export default function EventMapLocation({
                 title="Event Location Map"
                 onLoad={handleMapLoad}
                 onError={handleMapError}
-                aria-label={`Map showing location of event at ${fullAddress}`}
+                aria-label={`Map showing location of event at ${displayAddress}`}
               />
             )}
           </div>
@@ -139,7 +158,7 @@ export default function EventMapLocation({
 
       {/* Location Details Card */}
       <Card>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 p-4">
           {/* Location header with icon */}
           <div className="flex items-start gap-3">
             <MapPin className="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />

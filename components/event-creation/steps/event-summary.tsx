@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { 
   Loader2, 
   CheckCircle, 
@@ -19,28 +20,35 @@ import {
   Trophy,
   Star,
   FileText,
-  Navigation
+  Navigation,
+  Edit3,
+  Save,
+  X,
+  RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
-import { useAuth } from "@/hooks/use-auth";
-import { transformFormDataToSupabase, validateEventFormData, generateShareLink } from "@/lib/event-creation-utils";
+import { useAuth } from "@/components/auth/auth-provider";
+import { transformFormDataToSupabase, validateEventFormData, generateShareLink, generateEnhancedEventTitle } from "@/lib/event-creation-utils";
 import { supabase } from "@/lib/supabase";
 
 export function EventSummaryStep() {
   const router = useRouter();
   const { createEvent } = useEvents();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { 
     formData, 
     setSubmitting, 
     isSubmitting,
     resetForm,
     setCreatedEventId,
-    setShowSuccessScreen 
+    setShowSuccessScreen,
+    updateField
   } = useEventCreationStore();
   
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
 
   const getSportDisplayName = () => {
     const sportNames = {
@@ -95,7 +103,46 @@ export function EventSummaryStep() {
 
   const playersNeeded = formData.totalPlayers - formData.playersConfirmed;
 
+  // Generate or get the current title
+  const getCurrentTitle = () => {
+    if (formData.isCustomTitle && formData.title) {
+      return formData.title;
+    }
+    return generateEnhancedEventTitle(formData);
+  };
+
+  // Handle title editing
+  const handleEditTitle = () => {
+    setEditedTitle(getCurrentTitle());
+    setIsEditingTitle(true);
+  };
+
+  const handleSaveTitle = () => {
+    if (editedTitle.trim()) {
+      updateField('title', editedTitle.trim());
+      updateField('isCustomTitle', true);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleCancelEditTitle = () => {
+    setEditedTitle('');
+    setIsEditingTitle(false);
+  };
+
+  const handleResetToAutoTitle = () => {
+    updateField('title', undefined);
+    updateField('isCustomTitle', false);
+    setEditedTitle('');
+    setIsEditingTitle(false);
+  };
+
   const submitEvent = async () => {
+    // Wait for auth to load before checking authentication
+    if (authLoading) {
+      return;
+    }
+    
     // Validate user is authenticated
     if (!user) {
       toast({
@@ -223,13 +270,80 @@ export function EventSummaryStep() {
       {/* Event Summary Card */}
       <Card className="p-6 space-y-4">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">
-              {getSportDisplayName()} {getFormatDisplay()}
-            </h2>
-            <Badge variant="outline" className="capitalize">
-              {getSkillLevelDisplay()}
-            </Badge>
+          {/* Event Title Section */}
+          <div className="space-y-2">
+            {!isEditingTitle ? (
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">
+                  {getCurrentTitle()}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditTitle}
+                    className="h-8 px-2"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </Button>
+                  <Badge variant="outline" className="capitalize">
+                    {getSkillLevelDisplay()}
+                  </Badge>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    placeholder="Event title"
+                    className="flex-1"
+                    maxLength={60}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSaveTitle}
+                    className="h-8 px-2"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelEditTitle}
+                    className="h-8 px-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResetToAutoTitle}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Auto-generate
+                  </Button>
+                  <div className="text-xs text-muted-foreground">
+                    {editedTitle.length}/60 characters
+                  </div>
+                  <Badge variant="outline" className="capitalize">
+                    {getSkillLevelDisplay()}
+                  </Badge>
+                </div>
+              </div>
+            )}
+            
+            {/* Show indicator for custom vs auto-generated title */}
+            {!isEditingTitle && (
+              <div className="text-xs text-muted-foreground">
+                {formData.isCustomTitle ? 'Custom title' : 'Auto-generated title'}
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -323,12 +437,17 @@ export function EventSummaryStep() {
         <Button 
           className="w-full h-14 text-lg" 
           onClick={submitEvent}
-          disabled={isSubmitting}
+          disabled={isSubmitting || authLoading}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Creating Event...
+            </>
+          ) : authLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Loading...
             </>
           ) : (
             <>

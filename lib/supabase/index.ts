@@ -28,6 +28,7 @@ export type {
   EventParticipant,
   EventParticipantInsert,
   EventParticipantUpdate,
+  EventParticipantWithProfile,
   User,
   UserInsert,
   UserUpdate,

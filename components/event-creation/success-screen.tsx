@@ -37,7 +37,7 @@ export function SuccessScreen({ eventData }: SuccessScreenProps) {
   const router = useRouter();
 
   // Generate shareable link
-  const shareLink = `https://junto.app/event/${eventData.id}`;
+  const shareLink = `${window.location.origin}/event/${eventData.id}`;
 
   const handleCopyLink = async () => {
     try {

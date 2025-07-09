@@ -40,6 +40,10 @@ export interface EventCreationFormData {
   // Step 8: Cost & Details
   cost: number; // 0 for free
   additionalDetails?: string;
+  
+  // Auto-generated/Custom Title
+  title?: string; // Auto-generated or custom title
+  isCustomTitle: boolean; // Whether user has manually edited the title
 }
 
 interface EventCreationStore {
@@ -100,7 +104,9 @@ const initialFormData: EventCreationFormData = {
   playersConfirmed: 1, // Including organizer
   location: null,
   cost: 0, // Free by default
-  additionalDetails: ''
+  additionalDetails: '',
+  title: undefined, // Will be auto-generated
+  isCustomTitle: false // Starts as auto-generated
 };
 
 export const useEventCreationStore = create<EventCreationStore>()(
