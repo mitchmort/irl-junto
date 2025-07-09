@@ -42,19 +42,20 @@ export function EditableField({
     errors
   } = useEventEditStore();
 
-  const [localValue, setLocalValue] = useState(value);
+  const [localValue, setLocalValue] = useState(value ?? '');
   const isEditing = editingField === fieldName;
   const currentValue = getFieldValue(fieldName);
   const error = errors[fieldName];
 
   // Update local value when field value changes
   useEffect(() => {
-    setLocalValue(getFieldValue(fieldName));
+    const fieldValue = getFieldValue(fieldName);
+    setLocalValue(fieldValue ?? '');
   }, [getFieldValue, fieldName]);
 
   const handleEdit = () => {
     setEditingField(fieldName);
-    setLocalValue(currentValue);
+    setLocalValue(currentValue ?? '');
   };
 
   const handleSave = () => {
@@ -76,7 +77,7 @@ export function EditableField({
   };
 
   const handleCancel = () => {
-    setLocalValue(currentValue);
+    setLocalValue(currentValue ?? '');
     setEditingField(null);
     clearError(fieldName);
   };
@@ -97,7 +98,7 @@ export function EditableField({
         <div className="flex items-center gap-2">
           {type === "textarea" ? (
             <Textarea
-              value={localValue}
+              value={localValue ?? ''}
               onChange={(e) => setLocalValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
@@ -108,7 +109,7 @@ export function EditableField({
           ) : (
             <Input
               type={type}
-              value={localValue}
+              value={localValue ?? ''}
               onChange={(e) => setLocalValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
@@ -131,7 +132,7 @@ export function EditableField({
         )}
         {type === "textarea" && maxLength && (
           <p className="text-xs text-muted-foreground">
-            {String(localValue).length}/{maxLength} characters
+            {String(localValue ?? '').length}/{maxLength} characters
           </p>
         )}
       </div>

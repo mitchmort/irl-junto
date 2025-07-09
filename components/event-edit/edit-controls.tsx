@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface EditControlsProps {
-  eventId: number;
+  eventId?: number;
 }
 
 export function EditControls({ eventId }: EditControlsProps) {
@@ -38,6 +38,11 @@ export function EditControls({ eventId }: EditControlsProps) {
   
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Return null if eventId is not available
+  if (!eventId) {
+    return null;
+  }
 
   const handleSave = async () => {
     // Clear any existing errors

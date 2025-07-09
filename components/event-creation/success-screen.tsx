@@ -22,6 +22,7 @@ import { format } from "date-fns";
 interface SuccessScreenProps {
   eventData: {
     id: string;
+    slug: string;
     sport: string;
     format: string;
     date: Date;
@@ -36,8 +37,8 @@ interface SuccessScreenProps {
 export function SuccessScreen({ eventData }: SuccessScreenProps) {
   const router = useRouter();
 
-  // Generate shareable link
-  const shareLink = `${window.location.origin}/event/${eventData.id}`;
+  // Generate shareable link using slug
+  const shareLink = `${window.location.origin}/event/${eventData.slug}`;
 
   const handleCopyLink = async () => {
     try {

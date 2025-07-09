@@ -101,6 +101,7 @@ export type Database = {
           sub_type: string | null
           time: string
           title: string
+          url_slug: string
         }
         Insert: {
           arrival_instructions?: string | null
@@ -124,6 +125,7 @@ export type Database = {
           sub_type?: string | null
           time: string
           title: string
+          url_slug?: string
         }
         Update: {
           arrival_instructions?: string | null
@@ -147,6 +149,7 @@ export type Database = {
           sub_type?: string | null
           time?: string
           title?: string
+          url_slug?: string
         }
         Relationships: [
           {

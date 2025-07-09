@@ -42,6 +42,7 @@ export function EventSummaryStep() {
     isSubmitting,
     resetForm,
     setCreatedEventId,
+    setCreatedEventSlug,
     setShowSuccessScreen,
     updateField
   } = useEventCreationStore();
@@ -169,7 +170,7 @@ export function EventSummaryStep() {
     
     try {
       // Transform form data to Supabase format
-      const eventData = transformFormDataToSupabase(formData, user.id);
+      const eventData = await transformFormDataToSupabase(formData, user.id);
       
       // Create event in Supabase
       const createdEvent = await createEvent(eventData);
@@ -193,11 +194,9 @@ export function EventSummaryStep() {
         // Don't fail the whole operation if participant creation fails
       }
       
-      // Generate share link and update event if needed
-      const shareLink = generateShareLink(createdEvent.id);
-      
-      // Set the created event ID and show success screen
+      // Set the created event ID and slug, then show success screen
       setCreatedEventId(createdEvent.id.toString());
+      setCreatedEventSlug(createdEvent.url_slug);
       setShowSuccessScreen(true);
       
       toast({

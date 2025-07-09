@@ -2,26 +2,37 @@
 
 import { generateMeta } from "@/lib/utils";
 import { useEventPermissions } from "@/hooks/use-event-permissions";
-import { useEvent } from "@/hooks/use-events";
+import { useEvent, useEventBySlug } from "@/hooks/use-events";
 import { useEventParticipants } from "@/hooks/use-event-participants";
 import { EventActions } from "./event-actions";
 import { ParticipantList } from "./participant-list";
 import { EventDetails } from "./event-details";
-import EventMapLocation from "@/app/dashboard/(auth)/events/[id]/event-map-location";
+import EventMapLocation from "@/app/dashboard/(auth)/events/[slug]/event-map-location";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Calendar } from "lucide-react";
 
 interface EventPageProps {
-  eventId: number;
+  eventId?: number;
+  eventSlug?: string;
   editMode?: boolean;
 }
 
-export function EventPage({ eventId, editMode = false }: EventPageProps) {
-  const { event, loading: eventLoading, error: eventError } = useEvent(eventId);
-  const { participants, loading: participantsLoading } = useEventParticipants(eventId);
-  const { permissions, loading: permissionsLoading, refreshPermissions } = useEventPermissions(eventId);
+export function EventPage({ eventId, eventSlug, editMode = false }: EventPageProps) {
+  const { event: eventById, loading: eventLoadingById, error: eventErrorById } = useEvent(eventId);
+  const { event: eventBySlug, loading: eventLoadingBySlug, error: eventErrorBySlug } = useEventBySlug(eventSlug);
+  
+  // Use the appropriate event based on whether we have an ID or slug
+  const event = eventById || eventBySlug;
+  const eventLoading = eventLoadingById || eventLoadingBySlug;
+  const eventError = eventErrorById || eventErrorBySlug;
+  
+  // Get the actual event ID for other hooks
+  const actualEventId = event?.id || eventId;
+  
+  const { participants, loading: participantsLoading } = useEventParticipants(actualEventId);
+  const { permissions, loading: permissionsLoading, refreshPermissions } = useEventPermissions(actualEventId);
 
   const isLoading = eventLoading || participantsLoading || permissionsLoading;
 
@@ -183,7 +194,7 @@ export function EventPage({ eventId, editMode = false }: EventPageProps) {
         {/* Actions based on permissions */}
         <div className="shrink-0">
           <EventActions 
-            eventId={eventId} 
+            eventId={actualEventId} 
             permissions={permissions}
             onPermissionsChange={refreshPermissions}
           />
@@ -221,22 +232,6 @@ export function EventPage({ eventId, editMode = false }: EventPageProps) {
         </CardContent>
       </Card>
 
-      {/* Reviews Section - Only show if user can leave reviews or if there are existing reviews */}
-      {(permissions.canLeaveReview || permissions.isAuthenticated) && (
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-center py-8">
-              <h3 className="font-semibold mb-2">Event Reviews</h3>
-              <p className="text-muted-foreground text-sm">
-                {permissions.canLeaveReview 
-                  ? "Share your experience with other players"
-                  : "Reviews will be available after the event"
-                }
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

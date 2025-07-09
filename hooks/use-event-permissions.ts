@@ -24,7 +24,6 @@ export interface EventPermissions {
   canManageParticipants: boolean;
   canSeeAllParticipants: boolean;
   canSeePrivateDetails: boolean;
-  canLeaveReview: boolean;
   canShareEvent: boolean;
   
   // UI State
@@ -36,7 +35,7 @@ export interface EventPermissions {
   urgencyMessage?: string;
 }
 
-export function useEventPermissions(eventId: number) {
+export function useEventPermissions(eventId?: number) {
   const { user, loading: authLoading } = useAuth();
   const { event, loading: eventLoading, error: eventError } = useEvent(eventId);
   const { participants, loading: participantsLoading, checkUserParticipation } = useEventParticipants(eventId);
@@ -114,7 +113,6 @@ export function useEventPermissions(eventId: number) {
     const canManageParticipants = isOrganizer;
     const canSeeAllParticipants = isAuthenticated && (isParticipant || isOrganizer);
     const canSeePrivateDetails = isAuthenticated && (isParticipant || isOrganizer);
-    const canLeaveReview = isAuthenticated && isEventInPast && (isParticipant || isOrganizer);
     const canShareEvent = true; // Everyone can share
     
     // Determine primary button state
@@ -187,7 +185,6 @@ export function useEventPermissions(eventId: number) {
       canManageParticipants,
       canSeeAllParticipants,
       canSeePrivateDetails,
-      canLeaveReview,
       canShareEvent,
       primaryButtonText,
       primaryButtonAction,

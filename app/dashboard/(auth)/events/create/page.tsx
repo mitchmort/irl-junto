@@ -32,6 +32,7 @@ function EventCreationContent() {
     canAdvanceToStep,
     showSuccessScreen,
     createdEventId,
+    createdEventSlug,
     formData
   } = useEventCreationStore();
 
@@ -108,7 +109,7 @@ function EventCreationContent() {
   };
 
   // Show success screen if event was created
-  if (showSuccessScreen && createdEventId) {
+  if (showSuccessScreen && createdEventId && createdEventSlug) {
     return (
       <div className="min-h-screen bg-background event-creation-container">
         <main className="pt-8 px-4 pb-8 safe-area-bottom">
@@ -116,6 +117,7 @@ function EventCreationContent() {
             <SuccessScreen 
               eventData={{
                 id: createdEventId,
+                slug: createdEventSlug,
                 sport: formData.sport,
                 format: formData.isCustomFormat ? formData.customFormatText || '' : formData.format,
                 date: formData.date || new Date(),

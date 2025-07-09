@@ -61,6 +61,7 @@ interface EventCreationStore {
   
   // Success state
   createdEventId: string | null;
+  createdEventSlug: string | null;
   showSuccessScreen: boolean;
   
   // Actions
@@ -82,6 +83,7 @@ interface EventCreationStore {
   setSubmitting: (isSubmitting: boolean) => void;
   setValidating: (isValidating: boolean) => void;
   setCreatedEventId: (eventId: string | null) => void;
+  setCreatedEventSlug: (eventSlug: string | null) => void;
   setShowSuccessScreen: (show: boolean) => void;
   
   resetForm: () => void;
@@ -120,6 +122,7 @@ export const useEventCreationStore = create<EventCreationStore>()(
       isSubmitting: false,
       isValidatingStep: false,
       createdEventId: null,
+      createdEventSlug: null,
       showSuccessScreen: false,
 
       // Form data actions
@@ -182,6 +185,7 @@ export const useEventCreationStore = create<EventCreationStore>()(
       setSubmitting: (isSubmitting) => set({ isSubmitting }),
       setValidating: (isValidating) => set({ isValidatingStep: isValidating }),
       setCreatedEventId: (eventId) => set({ createdEventId: eventId }),
+      setCreatedEventSlug: (eventSlug) => set({ createdEventSlug: eventSlug }),
       setShowSuccessScreen: (show) => set({ showSuccessScreen: show }),
 
       // Validation
@@ -285,6 +289,7 @@ export const useEventCreationStore = create<EventCreationStore>()(
           isSubmitting: false,
           isValidatingStep: false,
           createdEventId: null,
+          createdEventSlug: null,
           showSuccessScreen: false
         });
       }

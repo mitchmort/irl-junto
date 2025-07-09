@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase, EventParticipant, EventParticipantInsert, EventParticipantUpdate, EventParticipantWithProfile } from '@/lib/supabase'
 
-export const useEventParticipants = (eventId: number) => {
+export const useEventParticipants = (eventId?: number) => {
   const [participants, setParticipants] = useState<EventParticipantWithProfile[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchParticipants = async () => {
+    if (!eventId) return;
+    
     setLoading(true)
     setError(null)
     
@@ -30,6 +32,11 @@ export const useEventParticipants = (eventId: number) => {
   }
 
   const joinEvent = async (participantData?: Partial<EventParticipantInsert>): Promise<EventParticipantWithProfile | null> => {
+    if (!eventId) {
+      setError('Event ID is required');
+      return null;
+    }
+    
     setLoading(true)
     setError(null)
     
@@ -71,6 +78,11 @@ export const useEventParticipants = (eventId: number) => {
   }
 
   const leaveEvent = async (): Promise<boolean> => {
+    if (!eventId) {
+      setError('Event ID is required');
+      return false;
+    }
+    
     setLoading(true)
     setError(null)
     
@@ -101,6 +113,11 @@ export const useEventParticipants = (eventId: number) => {
     userId: string, 
     updates: EventParticipantUpdate
   ): Promise<EventParticipantWithProfile | null> => {
+    if (!eventId) {
+      setError('Event ID is required');
+      return null;
+    }
+    
     setLoading(true)
     setError(null)
     
@@ -135,6 +152,11 @@ export const useEventParticipants = (eventId: number) => {
   }
 
   const removeParticipant = async (userId: string): Promise<boolean> => {
+    if (!eventId) {
+      setError('Event ID is required');
+      return false;
+    }
+    
     setLoading(true)
     setError(null)
     
@@ -159,6 +181,11 @@ export const useEventParticipants = (eventId: number) => {
   }
 
   const checkUserParticipation = async (): Promise<EventParticipant | null> => {
+    if (!eventId) {
+      setError('Event ID is required');
+      return null;
+    }
+    
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null

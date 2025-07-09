@@ -1,6 +1,7 @@
 import { EventCreationFormData } from '@/store/event-creation';
 import { EventInsert } from '@/types/database';
 import { format } from 'date-fns';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Generates an enhanced event title in the format "Day Period Activity Subcategory"
@@ -41,10 +42,10 @@ export function generateEnhancedEventTitle(formData: EventCreationFormData): str
 /**
  * Transforms form data from the event creation flow into the format expected by Supabase
  */
-export function transformFormDataToSupabase(
+export async function transformFormDataToSupabase(
   formData: EventCreationFormData,
   organizerId: string
-): EventInsert {
+): Promise<EventInsert> {
   // Generate event title from sport and format (legacy function for backward compatibility)
   const getEventTitle = (): string => {
     const sport = formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1);
@@ -136,6 +137,9 @@ export function transformFormDataToSupabase(
 
   const { equipment, arrival } = parseAdditionalDetails();
 
+  // Generate a unique URL slug for the event
+  const urlSlug = await generateUniqueEventSlug();
+
   // Transform the data
   const eventData: EventInsert = {
     title: getFinalTitle(),
@@ -156,16 +160,109 @@ export function transformFormDataToSupabase(
     description: null, // Could be added to form later
     notes: null,
     image: null,
-    share_link: null // Will be generated after creation
+    share_link: null, // Will be generated after creation
+    url_slug: urlSlug
   };
 
   return eventData;
 }
 
 /**
- * Generates a shareable link for an event
+ * Generates a random URL-safe string for event slugs
  */
-export function generateShareLink(eventId: number, baseUrl?: string): string {
+export function generateRandomSlug(length: number = 12): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const segments = Math.ceil(length / 4);
+  const segmentLength = Math.floor(length / segments);
+  
+  let result = '';
+  for (let i = 0; i < segments; i++) {
+    if (i > 0) result += '-';
+    for (let j = 0; j < segmentLength; j++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+  }
+  
+  // Add remaining characters if length doesn't divide evenly
+  const remaining = length - (segments * segmentLength);
+  for (let i = 0; i < remaining; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  return result;
+}
+
+/**
+ * Generates a cryptographically secure random URL slug
+ */
+export function generateSecureRandomSlug(length: number = 12): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  
+  // Use crypto.getRandomValues for better randomness
+  const array = new Uint8Array(length);
+  if (typeof window !== 'undefined' && window.crypto) {
+    window.crypto.getRandomValues(array);
+  } else if (typeof global !== 'undefined' && global.crypto) {
+    global.crypto.getRandomValues(array);
+  } else {
+    // Fallback to Math.random (less secure)
+    for (let i = 0; i < length; i++) {
+      array[i] = Math.floor(Math.random() * chars.length);
+    }
+  }
+  
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    if (i > 0 && i % 4 === 0) result += '-';
+    result += chars[array[i] % chars.length];
+  }
+  
+  return result;
+}
+
+/**
+ * Generates a unique URL slug for an event
+ */
+export async function generateUniqueEventSlug(length: number = 12): Promise<string> {
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (attempts < maxAttempts) {
+    const slug = generateSecureRandomSlug(length);
+    
+    // Check if slug already exists
+    const { data, error } = await supabase
+      .from('events')
+      .select('id')
+      .eq('url_slug', slug)
+      .single();
+    
+    if (error && error.code === 'PGRST116') {
+      // No row found, slug is unique
+      return slug;
+    } else if (error) {
+      // Other database error
+      throw error;
+    }
+    
+    attempts++;
+  }
+  
+  throw new Error('Failed to generate unique slug after maximum attempts');
+}
+
+/**
+ * Generates a shareable link for an event using slug
+ */
+export function generateShareLink(eventSlug: string, baseUrl?: string): string {
+  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://junto.app');
+  return `${base}/event/${eventSlug}`;
+}
+
+/**
+ * Legacy function for backward compatibility with numeric IDs
+ */
+export function generateShareLinkById(eventId: number, baseUrl?: string): string {
   const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://junto.app');
   return `${base}/event/${eventId}`;
 }

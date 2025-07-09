@@ -62,9 +62,9 @@ export const useEventEditStore = create<EventEditState>((set, get) => ({
       const newEditData = { ...state.editData };
       
       if (isDifferent) {
-        newEditData[field] = value;
+        (newEditData as any)[field] = value;
       } else {
-        delete newEditData[field];
+        delete (newEditData as any)[field];
       }
       
       return {
@@ -105,7 +105,9 @@ export const useEventEditStore = create<EventEditState>((set, get) => ({
 
   getFieldValue: (field) => {
     const { originalEvent, editData } = get();
-    return editData[field] !== undefined ? editData[field] : originalEvent?.[field as keyof Event];
+    const value = (editData as any)[field] !== undefined ? (editData as any)[field] : originalEvent?.[field as keyof Event];
+    // Convert null to empty string for text fields to prevent React errors
+    return value === null ? '' : value;
   },
 
   hasChanges: () => {

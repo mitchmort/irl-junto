@@ -65,22 +65,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-export type Event = {
-  id: number;
-  name: string;
-  sport_type: string;
-  date: string;
-  time: string;
-  location: string;
-  venue_name: string;
-  participants_current: number;
-  participants_max: number;
-  my_role: "Organizer" | "Participant";
-  status: "upcoming" | "full" | "completed" | "cancelled";
-  skill_level: string;
-  cost: number;
-  created_at: string;
-};
+import { UserEvent } from "@/hooks/use-user-events";
+
+export type Event = UserEvent;
 
 // Helper function to get sport icon
 const getSportIcon = (sportType: string) => {
@@ -130,7 +117,7 @@ export const columns: ColumnDef<Event>[] = [
     enableHiding: false
   },
   {
-    accessorKey: "name",
+    accessorKey: "title",
     header: ({ column }) => {
       return (
         <Button
@@ -148,9 +135,9 @@ export const columns: ColumnDef<Event>[] = [
         className="flex items-center gap-4 hover:opacity-80 transition-opacity"
       >
         <figure className="flex items-center justify-center w-12 h-12 rounded-lg border bg-muted">
-          <span className="text-lg">{getSportIcon(row.original.sport_type)}</span>
+          <span className="text-lg">{getSportIcon(row.original.sport)}</span>
         </figure>
-        <div className="font-medium">{row.getValue("name")}</div>
+        <div className="font-medium">{row.getValue("title")}</div>
       </Link>
     )
   },
@@ -198,7 +185,7 @@ export const columns: ColumnDef<Event>[] = [
     }
   },
   {
-    accessorKey: "sport_type",
+    accessorKey: "sport",
     header: ({ column }) => {
       return (
         <Button
@@ -213,7 +200,7 @@ export const columns: ColumnDef<Event>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <Trophy className="size-4 text-muted-foreground" />
-        <span>{row.getValue("sport_type")}</span>
+        <span>{row.getValue("sport")}</span>
       </div>
     ),
     filterFn: (row, columnId, value: string[]) => {
@@ -222,7 +209,7 @@ export const columns: ColumnDef<Event>[] = [
     }
   },
   {
-    accessorKey: "participants_current",
+    accessorKey: "participant_count",
     header: ({ column }) => {
       return (
         <Button
@@ -237,30 +224,43 @@ export const columns: ColumnDef<Event>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <Users className="size-4 text-muted-foreground" />
-        <span>{row.original.participants_current}/{row.original.participants_max}</span>
+        <span>{row.original.participant_count}/{row.original.max_participants}</span>
       </div>
     )
   },
   {
     accessorKey: "location",
     header: "Location",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <MapPin className="size-4 text-muted-foreground" />
-        <span className="truncate max-w-[150px]" title={row.original.venue_name}>
-          {row.original.venue_name}
-        </span>
-      </div>
-    )
+    cell: ({ row }) => {
+      // Parse location JSON to get venue name
+      let venueName = '';
+      try {
+        const location = JSON.parse(row.original.location);
+        venueName = location.name || location.address || 'Unknown Location';
+      } catch {
+        venueName = row.original.location || 'Unknown Location';
+      }
+      
+      return (
+        <div className="flex items-center gap-2">
+          <MapPin className="size-4 text-muted-foreground" />
+          <span className="truncate max-w-[150px]" title={venueName}>
+            {venueName}
+          </span>
+        </div>
+      );
+    }
   },
   {
-    accessorKey: "my_role",
+    accessorKey: "user_role",
     header: "My Role",
     cell: ({ row }) => {
-      const role = row.original.my_role;
+      const role = row.original.user_role;
+      if (!role) return <span className="text-muted-foreground">-</span>;
+      
       return (
-        <Badge variant={role === "Organizer" ? "default" : "secondary"}>
-          {role}
+        <Badge variant={role === "organizer" ? "default" : "secondary"}>
+          {role === "organizer" ? "Organizer" : "Participant"}
         </Badge>
       );
     }
@@ -279,7 +279,18 @@ export const columns: ColumnDef<Event>[] = [
       );
     },
     cell: ({ row }) => {
-      const status = row.original.status;
+      const event = row.original;
+      let status: string;
+      
+      if (event.status === 'cancelled') {
+        status = 'cancelled';
+      } else if (new Date(event.date) < new Date()) {
+        status = 'completed';
+      } else if (event.participant_count >= event.max_participants) {
+        status = 'full';
+      } else {
+        status = 'upcoming';
+      }
 
       const statusMap = {
         upcoming: "default",
@@ -288,7 +299,7 @@ export const columns: ColumnDef<Event>[] = [
         cancelled: "destructive"
       } as const;
 
-      const statusClass = statusMap[status] ?? "default";
+      const statusClass = statusMap[status as keyof typeof statusMap] ?? "default";
 
       return (
         <div>
@@ -300,7 +311,20 @@ export const columns: ColumnDef<Event>[] = [
     },
     filterFn: (row, columnId, value: string[]) => {
       if (!value || value.length === 0) return true;
-      return value.includes(row.getValue(columnId) as string);
+      const event = row.original;
+      let status: string;
+      
+      if (event.status === 'cancelled') {
+        status = 'cancelled';
+      } else if (new Date(event.date) < new Date()) {
+        status = 'completed';
+      } else if (event.participant_count >= event.max_participants) {
+        status = 'full';
+      } else {
+        status = 'upcoming';
+      }
+      
+      return value.includes(status);
     }
   },
   {
@@ -335,19 +359,40 @@ export const columns: ColumnDef<Event>[] = [
 
 // Mobile Event Card Component
 const MobileEventCard = ({ event }: { event: Event }) => {
+  // Parse location JSON to get venue name
+  let venueName = '';
+  try {
+    const location = JSON.parse(event.location);
+    venueName = location.name || location.address || 'Unknown Location';
+  } catch {
+    venueName = event.location || 'Unknown Location';
+  }
+
+  // Calculate status
+  let status: string;
+  if (event.status === 'cancelled') {
+    status = 'cancelled';
+  } else if (new Date(event.date) < new Date()) {
+    status = 'completed';
+  } else if (event.participant_count >= event.max_participants) {
+    status = 'full';
+  } else {
+    status = 'upcoming';
+  }
+
   return (
-    <div className="bg-white rounded-lg border p-4 space-y-3" role="article" aria-label={`Event: ${event.name}`}>
+    <div className="bg-white rounded-lg border p-4 space-y-3" role="article" aria-label={`Event: ${event.title}`}>
       {/* Event Name with Sport Icon - Clickable */}
       <Link 
         href={`/dashboard/events/${event.id}`}
         className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-        aria-label={`View details for ${event.name}`}
+        aria-label={`View details for ${event.title}`}
       >
         <div className="flex items-center justify-center w-10 h-10 rounded-lg border bg-muted" aria-hidden="true">
-          <span className="text-lg">{getSportIcon(event.sport_type)}</span>
+          <span className="text-lg">{getSportIcon(event.sport)}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium truncate">{event.name}</h3>
+          <h3 className="font-medium truncate">{event.title}</h3>
         </div>
       </Link>
 
@@ -360,8 +405,8 @@ const MobileEventCard = ({ event }: { event: Event }) => {
       {/* Location */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <MapPin className="size-4" />
-        <span className="truncate" title={event.venue_name}>
-          {event.venue_name}
+        <span className="truncate" title={venueName}>
+          {venueName}
         </span>
       </div>
 
@@ -371,24 +416,26 @@ const MobileEventCard = ({ event }: { event: Event }) => {
           {/* Participants */}
           <div className="flex items-center gap-1 text-sm">
             <Users className="size-4 text-muted-foreground" />
-            <span>{event.participants_current}/{event.participants_max}</span>
+            <span>{event.participant_count}/{event.max_participants}</span>
           </div>
 
           {/* Role Badge */}
-          <Badge variant={event.my_role === "Organizer" ? "default" : "secondary"} className="text-xs">
-            {event.my_role}
-          </Badge>
+          {event.user_role && (
+            <Badge variant={event.user_role === "organizer" ? "default" : "secondary"} className="text-xs">
+              {event.user_role === "organizer" ? "Organizer" : "Participant"}
+            </Badge>
+          )}
 
           {/* Status Badge */}
           <Badge 
             variant={
-              event.status === "upcoming" ? "default" :
-              event.status === "full" ? "warning" :
-              event.status === "completed" ? "secondary" : "destructive"
+              status === "upcoming" ? "default" :
+              status === "full" ? "warning" :
+              status === "completed" ? "secondary" : "destructive"
             } 
             className="text-xs capitalize"
           >
-            {event.status}
+            {status}
           </Badge>
         </div>
 
@@ -506,7 +553,7 @@ export default function EventList({ data }: { data: Event[] }) {
     
     if (sportTypeFilter.length > 0) {
       filters.push({
-        id: "sport_type",
+        id: "sport",
         value: sportTypeFilter
       });
     }
@@ -677,8 +724,8 @@ export default function EventList({ data }: { data: Event[] }) {
           <div className="flex gap-2">
             <Input
               placeholder="Search events..."
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-              onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+              value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+              onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
               className="max-w-sm"
             />
             <Filters />
@@ -715,8 +762,8 @@ export default function EventList({ data }: { data: Event[] }) {
           <div className="flex gap-2">
             <Input
               placeholder="Search events..."
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-              onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+              value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+              onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
               className="flex-1"
             />
             <Popover>

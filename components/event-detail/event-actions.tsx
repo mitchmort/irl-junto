@@ -30,7 +30,7 @@ import { EventPermissions } from "@/hooks/use-event-permissions";
 import { useEventParticipants } from "@/hooks/use-event-participants";
 
 interface EventActionsProps {
-  eventId: number;
+  eventId?: number;
   permissions: EventPermissions;
   onPermissionsChange?: () => void;
 }
@@ -39,6 +39,11 @@ export function EventActions({ eventId, permissions, onPermissionsChange }: Even
   const router = useRouter();
   const { joinEvent, leaveEvent } = useEventParticipants(eventId);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Return null if eventId is not available
+  if (!eventId) {
+    return null;
+  }
 
   const handleJoinEvent = async () => {
     setIsLoading(true);

@@ -9,11 +9,11 @@ export async function generateMetadata() {
   });
 }
 
-export default async function PublicEventPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function PublicEventPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   
   // Redirect to the dashboard event page
   // This ensures all event access goes through the authenticated dashboard route
   // which handles permissions, authentication, and user-specific UI properly
-  redirect(`/dashboard/events/${id}`);
+  redirect(`/dashboard/events/${slug}`);
 }
