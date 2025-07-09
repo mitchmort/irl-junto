@@ -167,9 +167,9 @@ export function EventPage({ eventId, eventSlug, editMode = false }: EventPagePro
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1.5">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="font-display text-xl tracking-tight lg:text-2xl">
@@ -202,7 +202,7 @@ export function EventPage({ eventId, eventSlug, editMode = false }: EventPagePro
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-1.5 xl:grid-cols-3">
         {/* Map Location */}
         <div className="xl:col-span-1">
           <EventMapLocation 
@@ -221,8 +221,8 @@ export function EventPage({ eventId, eventSlug, editMode = false }: EventPagePro
       </div>
 
       {/* Participants Section */}
-      <Card>
-        <CardContent className="pt-4">
+      <Card className="py-2 gap-2">
+        <CardContent className="p-3">
           <ParticipantList 
             participants={participants}
             maxParticipants={event.max_participants}

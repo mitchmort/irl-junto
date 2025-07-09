@@ -24,7 +24,9 @@ import {
   Edit3,
   Save,
   X,
-  RotateCcw
+  RotateCcw,
+  Globe,
+  Lock
 } from "lucide-react";
 import { format } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
@@ -170,10 +172,13 @@ export function EventSummaryStep() {
     
     try {
       // Transform form data to Supabase format
+      console.log('Form data before transformation:', formData);
       const eventData = await transformFormDataToSupabase(formData, user.id);
+      console.log('Transformed event data:', eventData);
       
       // Create event in Supabase
       const createdEvent = await createEvent(eventData);
+      console.log('Created event:', createdEvent);
       
       if (!createdEvent) {
         throw new Error('Failed to create event');
@@ -413,16 +418,42 @@ export function EventSummaryStep() {
             </div>
           </div>
 
+          {/* Event Description */}
+          {formData.description && (
+            <>
+              <Separator />
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                  <Globe className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium">About this event</p>
+                    <Badge variant="outline" className="text-xs">
+                      Public
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formData.description}</p>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Additional Details */}
           {formData.additionalDetails && (
             <>
               <Separator />
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
-                  <FileText className="h-4 w-4 text-primary" />
+                  <Lock className="h-4 w-4 text-primary" />
                 </div>
-                <div>
-                  <p className="font-medium">Additional details</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium">Extra details for confirmed players</p>
+                    <Badge variant="outline" className="text-xs">
+                      Private
+                    </Badge>
+                  </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formData.additionalDetails}</p>
                 </div>
               </div>

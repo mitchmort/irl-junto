@@ -77,13 +77,17 @@ export const useEvents = (filters: EventsFilters = {}) => {
     setError(null)
     
     try {
+      console.log('Attempting to create event with data:', eventData);
       const { data, error: createError } = await supabase
         .from('events')
         .insert(eventData)
         .select()
         .single()
       
-      if (createError) throw createError
+      if (createError) {
+        console.error('Supabase create error:', createError);
+        throw createError;
+      }
       
       // Update local state
       if (data) {

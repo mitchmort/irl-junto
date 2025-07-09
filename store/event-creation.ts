@@ -39,6 +39,7 @@ export interface EventCreationFormData {
   
   // Step 8: Cost & Details
   cost: number; // 0 for free
+  description?: string; // Public event description
   additionalDetails?: string;
   
   // Auto-generated/Custom Title
@@ -106,6 +107,7 @@ const initialFormData: EventCreationFormData = {
   playersConfirmed: 1, // Including organizer
   location: null,
   cost: 0, // Free by default
+  description: '',
   additionalDetails: '',
   title: undefined, // Will be auto-generated
   isCustomTitle: false // Starts as auto-generated
@@ -283,7 +285,7 @@ export const useEventCreationStore = create<EventCreationStore>()(
       // Reset
       resetForm: () => {
         set({
-          formData: initialFormData,
+          formData: { ...initialFormData },
           currentStep: 1,
           completedSteps: new Set<number>(),
           isSubmitting: false,

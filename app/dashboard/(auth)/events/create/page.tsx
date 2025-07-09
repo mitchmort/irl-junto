@@ -36,6 +36,16 @@ function EventCreationContent() {
     formData
   } = useEventCreationStore();
 
+  // Reset form when starting fresh from step 1
+  useEffect(() => {
+    const step = searchParams.get('step');
+    
+    // Reset form when starting from step 1 (new event creation)
+    if (step === '1' || !step) {
+      resetForm();
+    }
+  }, []); // Only run on mount
+
   // Sync URL with current step
   useEffect(() => {
     const stepParam = searchParams.get('step');
@@ -77,7 +87,7 @@ function EventCreationContent() {
       5: "Time & Duration",
       6: "Player Count",
       7: "Location",
-      8: "Cost & Details",
+      8: "Details & Cost",
       9: "Review & Create"
     };
     return titles[step as keyof typeof titles] || "";

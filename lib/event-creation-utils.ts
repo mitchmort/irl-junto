@@ -157,7 +157,7 @@ export async function transformFormDataToSupabase(
     arrival_instructions: arrival || null,
     organizer: organizerId,
     status: 'open',
-    description: null, // Could be added to form later
+    description: formData.description || null,
     notes: null,
     image: null,
     share_link: null, // Will be generated after creation

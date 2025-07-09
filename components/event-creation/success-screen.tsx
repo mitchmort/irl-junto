@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEventCreationStore } from "@/store/event-creation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ interface SuccessScreenProps {
 
 export function SuccessScreen({ eventData }: SuccessScreenProps) {
   const router = useRouter();
+  const { resetForm } = useEventCreationStore();
 
   // Generate shareable link using slug
   const shareLink = `${window.location.origin}/event/${eventData.slug}`;
@@ -88,6 +90,7 @@ export function SuccessScreen({ eventData }: SuccessScreenProps) {
   };
 
   const handleCreateAnother = () => {
+    resetForm();
     router.push('/dashboard/events/create?step=1');
   };
 

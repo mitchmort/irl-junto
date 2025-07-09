@@ -113,11 +113,11 @@ export default function EventMapLocation({
   };
 
   return (
-    <div className="sticky top-20 space-y-3">
+    <div className="sticky top-6 space-y-1">
       {/* Google Maps Embed Card */}
-      <Card>
+      <Card className="py-1 gap-1">
         <CardContent className="p-0">
-          <div className="relative aspect-3/2 w-full lg:aspect-square">
+          <div className="relative aspect-video w-full lg:aspect-[4/3]">
             {isMapLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg">
                 <div className="animate-pulse">
@@ -157,12 +157,12 @@ export default function EventMapLocation({
       </Card>
 
       {/* Location Details Card */}
-      <Card>
-        <CardContent className="space-y-3 p-4">
+      <Card className="py-1 gap-1">
+        <CardContent className="space-y-2 p-2.5">
           {/* Location header with icon */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2.5">
             <MapPin className="size-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-            <div className="space-y-1 flex-1 min-w-0">
+            <div className="space-y-0.5 flex-1 min-w-0">
               {venueName && (
                 <h4 className="font-semibold text-sm lg:text-base truncate">{venueName}</h4>
               )}
