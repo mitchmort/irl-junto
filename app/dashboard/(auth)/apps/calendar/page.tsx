@@ -2,6 +2,8 @@ import { generateMeta } from "@/lib/utils";
 import CalendarApp from "@/app/dashboard/(auth)/apps/calendar/calendar-app";
 import CalendarSidebar from "@/app/dashboard/(auth)/apps/calendar/calendar-sidebar";
 import EventSheet from "@/app/dashboard/(auth)/apps/calendar/event-sheet";
+import EventDetailsSheetWrapper from "@/app/dashboard/(auth)/apps/calendar/event-details-sheet-wrapper";
+import EventCreationConfirmationModal from "@/app/dashboard/(auth)/apps/calendar/event-creation-confirmation-modal";
 import React from "react";
 
 export async function generateMetadata() {
@@ -21,6 +23,8 @@ export default function Page() {
         <CalendarApp />
       </div>
       <EventSheet />
+      <EventDetailsSheetWrapper />
+      <EventCreationConfirmationModal />
     </div>
   );
 }

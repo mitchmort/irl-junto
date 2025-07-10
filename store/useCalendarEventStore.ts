@@ -87,6 +87,12 @@ interface Store {
   // Preview modal state
   previewModalOpen: boolean;
   previewEvent: EventInput | null;
+  // Details sheet state
+  detailsSheetOpen: boolean;
+  detailsSheetEvent: EventInput | null;
+  // Event creation confirmation modal state
+  createEventConfirmModalOpen: boolean;
+  selectedDate: Date | null;
   
   // Actions
   fetchEvents: () => Promise<void>;
@@ -99,6 +105,12 @@ interface Store {
   // Preview modal actions
   setPreviewModalOpen: (open: boolean) => void;
   setPreviewEvent: (event: EventInput | null) => void;
+  // Details sheet actions
+  setDetailsSheetOpen: (open: boolean) => void;
+  setDetailsSheetEvent: (event: EventInput | null) => void;
+  // Event creation confirmation modal actions
+  setCreateEventConfirmModalOpen: (open: boolean) => void;
+  setSelectedDate: (date: Date | null) => void;
 }
 
 const calendarEventStore: StateCreator<Store> = (set, get) => ({
@@ -109,6 +121,10 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
   error: null,
   previewModalOpen: false,
   previewEvent: null,
+  detailsSheetOpen: false,
+  detailsSheetEvent: null,
+  createEventConfirmModalOpen: false,
+  selectedDate: null,
 
   fetchEvents: async () => {
     set({ loading: true, error: null });
@@ -221,7 +237,29 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
     set({ previewModalOpen: open });
   },
   
-  setPreviewEvent: (event) => set({ previewEvent: event })
+  setPreviewEvent: (event) => set({ previewEvent: event }),
+  
+  setDetailsSheetOpen: (open) => {
+    if (!open) {
+      setTimeout(() => {
+        set({ detailsSheetEvent: null });
+      }, 300);
+    }
+    set({ detailsSheetOpen: open });
+  },
+  
+  setDetailsSheetEvent: (event) => set({ detailsSheetEvent: event }),
+  
+  setCreateEventConfirmModalOpen: (open) => {
+    if (!open) {
+      setTimeout(() => {
+        set({ selectedDate: null });
+      }, 300);
+    }
+    set({ createEventConfirmModalOpen: open });
+  },
+  
+  setSelectedDate: (date) => set({ selectedDate: date })
 });
 
 const useCalendarEventStore = create(calendarEventStore);

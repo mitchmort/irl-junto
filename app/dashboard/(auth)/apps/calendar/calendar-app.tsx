@@ -30,7 +30,11 @@ export default function CalendarApp() {
     previewModalOpen,
     previewEvent,
     setPreviewModalOpen,
-    setPreviewEvent
+    setPreviewEvent,
+    setDetailsSheetOpen,
+    setDetailsSheetEvent,
+    setCreateEventConfirmModalOpen,
+    setSelectedDate
   } = useCalendarEventStore();
 
   // Fetch events on component mount
@@ -39,14 +43,15 @@ export default function CalendarApp() {
   }, [fetchEvents]);
 
   const handleDateClick = (arg: DateClickArg) => {
-    setOpenSheet(true);
+    setSelectedDate(arg.date);
+    setCreateEventConfirmModalOpen(true);
   };
 
   const handleEventClick = (e: EventClickArg) => {
     const event = events.find((event) => event.id === e.event.id);
     if (event) {
-      setPreviewEvent(event);
-      setPreviewModalOpen(true);
+      setDetailsSheetEvent(event);
+      setDetailsSheetOpen(true);
     }
   };
 

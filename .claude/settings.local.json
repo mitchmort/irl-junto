@@ -27,7 +27,8 @@
       "mcp__supabase__execute_sql",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "mcp__supabase__apply_migration"
+      "mcp__supabase__apply_migration",
+      "Bash(true)"
     ],
     "deny": []
   }

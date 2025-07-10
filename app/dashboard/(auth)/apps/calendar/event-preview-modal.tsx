@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { EventInput } from "@fullcalendar/core";
+import { EventInput, DateInput } from "@fullcalendar/core";
 import {
   Dialog,
   DialogContent,
@@ -40,10 +40,18 @@ const getSportEmoji = (sport: string): string => {
 };
 
 // Helper function to format date and time
-const formatDateTime = (start: string | Date | undefined): string => {
+const formatDateTime = (start: DateInput | undefined): string => {
   if (!start) return "Date TBD";
   
-  const date = new Date(start);
+  // Handle different DateInput types - convert to Date
+  let date: Date;
+  if (start instanceof Date) {
+    date = start;
+  } else if (typeof start === 'string' || typeof start === 'number') {
+    date = new Date(start);
+  } else {
+    return "Date TBD";
+  }
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);

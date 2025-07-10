@@ -9,11 +9,11 @@ import { eventColors } from "@/app/dashboard/(auth)/apps/calendar/data";
 import { EventInput } from "@fullcalendar/core";
 
 export function UpcomingEvents() {
-  const { events, setSelectedEvent, setOpenSheet } = useCalendarEventStore();
+  const { events, setDetailsSheetEvent, setDetailsSheetOpen } = useCalendarEventStore();
 
   function handleSelectEvent(event: EventInput) {
-    setSelectedEvent(event);
-    setOpenSheet(true);
+    setDetailsSheetEvent(event);
+    setDetailsSheetOpen(true);
   }
 
   if (events.length === 0) {

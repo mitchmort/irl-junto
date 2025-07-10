@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 
 import { CalendarPlus, Menu } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { UpcomingEvents } from "@/app/dashboard/(auth)/apps/calendar/upcoming-events";
-import useCalendarEventStore from "@/store/useCalendarEventStore";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,11 +13,11 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function CalendarSidebar() {
-  const { setOpenSheet } = useCalendarEventStore();
+  const router = useRouter();
 
   return (
     <div className="sticky top-20 hidden space-y-4 xl:block">
-      <Button onClick={() => setOpenSheet(true)} className="w-full">
+      <Button onClick={() => router.push('/dashboard/events/create?step=1')} className="w-full">
         <CalendarPlus /> Add Event
       </Button>
       <ScrollArea className="h-[calc(100vh-9.8rem)]">
@@ -28,7 +28,7 @@ export default function CalendarSidebar() {
 }
 
 export function CalendarMobileSidebar() {
-  const { setOpenSheet } = useCalendarEventStore();
+  const router = useRouter();
 
   return (
     <Sheet>
@@ -44,7 +44,7 @@ export function CalendarMobileSidebar() {
         <div className="flex-1 overflow-y-auto">
           <UpcomingEvents />
         </div>
-        <Button onClick={() => setOpenSheet(true)} className="w-full">
+        <Button onClick={() => router.push('/dashboard/events/create?step=1')} className="w-full">
           <CalendarPlus /> Add Event
         </Button>
       </SheetContent>
