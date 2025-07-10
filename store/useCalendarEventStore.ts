@@ -53,7 +53,8 @@ const convertToCalendarEvent = (event: Event): EventInput => {
       equipment_requirements: event.equipment_requirements,
       arrival_instructions: event.arrival_instructions,
       share_link: event.share_link,
-      created_at: event.created_at
+      created_at: event.created_at,
+      url_slug: event.url_slug
     }
   };
 };
@@ -83,6 +84,9 @@ interface Store {
   openSheet: boolean;
   loading: boolean;
   error: string | null;
+  // Preview modal state
+  previewModalOpen: boolean;
+  previewEvent: EventInput | null;
   
   // Actions
   fetchEvents: () => Promise<void>;
@@ -92,6 +96,9 @@ interface Store {
   setOpenSheet: (value: boolean) => void;
   setSelectedEvent: (event: EventInput | null) => void;
   clearError: () => void;
+  // Preview modal actions
+  setPreviewModalOpen: (open: boolean) => void;
+  setPreviewEvent: (event: EventInput | null) => void;
 }
 
 const calendarEventStore: StateCreator<Store> = (set, get) => ({
@@ -100,6 +107,8 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
   openSheet: false,
   loading: false,
   error: null,
+  previewModalOpen: false,
+  previewEvent: null,
 
   fetchEvents: async () => {
     set({ loading: true, error: null });
@@ -201,7 +210,18 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
 
   setSelectedEvent: (event) => set(() => ({ selectedEvent: event })),
   
-  clearError: () => set({ error: null })
+  clearError: () => set({ error: null }),
+  
+  setPreviewModalOpen: (open) => {
+    if (!open) {
+      setTimeout(() => {
+        set({ previewEvent: null });
+      }, 300);
+    }
+    set({ previewModalOpen: open });
+  },
+  
+  setPreviewEvent: (event) => set({ previewEvent: event })
 });
 
 const useCalendarEventStore = create(calendarEventStore);

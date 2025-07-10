@@ -131,7 +131,7 @@ export const columns: ColumnDef<Event>[] = [
     },
     cell: ({ row }) => (
       <Link 
-        href={`/dashboard/events/${row.original.id}`} 
+        href={`/dashboard/events/${row.original.url_slug}`} 
         className="flex items-center gap-4 hover:opacity-80 transition-opacity"
       >
         <figure className="flex items-center justify-center w-12 h-12 rounded-lg border bg-muted">
@@ -343,7 +343,7 @@ export const columns: ColumnDef<Event>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/events/${row.original.id}`}>
+              <Link href={`/dashboard/events/${row.original.url_slug}`}>
                 View Details
               </Link>
             </DropdownMenuItem>
@@ -384,7 +384,7 @@ const MobileEventCard = ({ event }: { event: Event }) => {
     <div className="bg-white rounded-lg border p-4 space-y-3" role="article" aria-label={`Event: ${event.title}`}>
       {/* Event Name with Sport Icon - Clickable */}
       <Link 
-        href={`/dashboard/events/${event.id}`}
+        href={`/dashboard/events/${event.url_slug}`}
         className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         aria-label={`View details for ${event.title}`}
       >
@@ -451,7 +451,7 @@ const MobileEventCard = ({ event }: { event: Event }) => {
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/events/${event.id}`}>
+              <Link href={`/dashboard/events/${event.url_slug}`}>
                 View Details
               </Link>
             </DropdownMenuItem>
@@ -465,7 +465,15 @@ const MobileEventCard = ({ event }: { event: Event }) => {
   );
 };
 
-export default function EventList({ data }: { data: Event[] }) {
+export default function EventList({ 
+  data, 
+  hideFilters = false,
+  filterContext
+}: { 
+  data: Event[],
+  hideFilters?: boolean,
+  filterContext?: string 
+}) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -728,7 +736,7 @@ export default function EventList({ data }: { data: Event[] }) {
               onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
               className="max-w-sm"
             />
-            <Filters />
+            {!hideFilters && <Filters />}
           </div>
           <div className="ms-auto flex gap-2">
             <DropdownMenu>
@@ -766,21 +774,23 @@ export default function EventList({ data }: { data: Event[] }) {
               onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
               className="flex-1"
             />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <FilterIcon />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4">
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Filters</h4>
-                  <div className="space-y-3">
-                    <Filters />
+            {!hideFilters && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <FilterIcon />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-4">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Filters</h4>
+                    <div className="space-y-3">
+                      <Filters />
+                    </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
       </CardHeader>

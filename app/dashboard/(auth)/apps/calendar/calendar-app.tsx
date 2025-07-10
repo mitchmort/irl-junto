@@ -16,10 +16,22 @@ import { eventColors } from "@/app/dashboard/(auth)/apps/calendar/data";
 import { EventClickArg } from "@fullcalendar/core";
 import CalendarToolbar from "@/app/dashboard/(auth)/apps/calendar/calendar-toolbar";
 import { Spinner } from "@/components/ui/spinner";
+import EventPreviewModal from "@/app/dashboard/(auth)/apps/calendar/event-preview-modal";
 
 export default function CalendarApp() {
   const calendarRef = React.useRef<FullCalendar>(null);
-  const { events, loading, error, setSelectedEvent, setOpenSheet, fetchEvents } = useCalendarEventStore();
+  const { 
+    events, 
+    loading, 
+    error, 
+    setSelectedEvent, 
+    setOpenSheet, 
+    fetchEvents,
+    previewModalOpen,
+    previewEvent,
+    setPreviewModalOpen,
+    setPreviewEvent
+  } = useCalendarEventStore();
 
   // Fetch events on component mount
   useEffect(() => {
@@ -32,8 +44,10 @@ export default function CalendarApp() {
 
   const handleEventClick = (e: EventClickArg) => {
     const event = events.find((event) => event.id === e.event.id);
-    if (event) setSelectedEvent(event);
-    setOpenSheet(true);
+    if (event) {
+      setPreviewEvent(event);
+      setPreviewModalOpen(true);
+    }
   };
 
   const handleEventResizeStop = (e: EventResizeStopArg) => {
@@ -94,6 +108,11 @@ export default function CalendarApp() {
           }))
         ]}
         height="calc(100vh - 10rem)"
+      />
+      <EventPreviewModal
+        event={previewEvent}
+        open={previewModalOpen}
+        onOpenChange={setPreviewModalOpen}
       />
     </>
   );

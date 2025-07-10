@@ -16,98 +16,105 @@ type PageRoutesItemType = {
 
 export const page_routes: PageRoutesType[] = [
   {
-    title: "Dashboards",
+    title: "Dashboard",
     items: [
       {
-        title: "Default",
+        title: "Dashboard",
         href: "/dashboard/default",
-        icon: "ChartPie"
-      },
-      {
-        title: "E-commerce",
-        href: "#",
-        icon: "ShoppingBag",
-        items: [
-          { title: "Dashboard", href: "/dashboard/ecommerce" },
-          { title: "Product List", href: "/dashboard/pages/products" },
-          { title: "Product Detail", href: "/dashboard/pages/products/1" },
-          { title: "Add Product", href: "/dashboard/pages/products/create" },
-          { title: "Order List", href: "/dashboard/pages/orders" },
-          { title: "Order Detail", href: "/dashboard/pages/orders/detail" }
-        ]
+        icon: "BarChart3"
       }
     ]
   },
   {
-    title: "Apps",
+    title: "Organizing",
     items: [
-      { title: "AI Chat", href: "/dashboard/apps/ai-chat", icon: "Brain", isNew: true },
-      { title: "Chats", href: "/dashboard/apps/chat", icon: "MessageSquare", isDataBadge: "4" },
-      { title: "Calendar", href: "/dashboard/apps/calendar", icon: "Calendar" },
-      { title: "Events", href: "/dashboard/events", icon: "Calendar", isNew: true }
+      {
+        title: "Create Event",
+        href: "/dashboard/events/create?step=1",
+        icon: "Plus"
+      },
+      {
+        title: "Manage Events",
+        href: "/dashboard/events?filter=organized",
+        icon: "Settings"
+      }
     ]
   },
   {
-    title: "Pages",
+    title: "Playing",
     items: [
       {
-        title: "Users",
-        href: "/dashboard/pages/users",
-        icon: "Users",
-        items: [
-          { title: "Users List", href: "/dashboard/pages/users" },
-          { title: "Profile", href: "/dashboard/pages/profile" }
-        ]
+        title: "My RSVPs",
+        href: "/dashboard/events?filter=joined",
+        icon: "UserCheck"
+      },
+      {
+        title: "Game History",
+        href: "/dashboard/events?filter=completed",
+        icon: "History"
+      }
+    ]
+  },
+  {
+    title: "Schedule",
+    items: [
+      {
+        title: "All Events",
+        href: "/dashboard/events",
+        icon: "List"
+      },
+      {
+        title: "Event Calendar",
+        href: "/dashboard/apps/calendar",
+        icon: "Calendar"
+      }
+    ]
+  },
+  {
+    title: "Messages",
+    items: [
+      {
+        title: "Messages",
+        href: "/dashboard/apps/chat",
+        icon: "MessageSquare",
+        isDataBadge: "4"
+      }
+    ]
+  },
+  {
+    title: "Account",
+    items: [
+      {
+        title: "Profile",
+        href: "/dashboard/pages/profile",
+        icon: "User"
       },
       {
         title: "Settings",
-        href: "/dashboard/pages/settings",
+        href: "/dashboard/pages/settings/account",
         icon: "Settings",
         items: [
-          { title: "Profile", href: "/dashboard/pages/settings" },
-          { title: "Account", href: "/dashboard/pages/settings/account" },
-          { title: "Appearance", href: "/dashboard/pages/settings/appearance" },
-          { title: "Notifications", href: "/dashboard/pages/settings/notifications" },
-          { title: "Display", href: "/dashboard/pages/settings/display" }
+          {
+            title: "Edit Profile",
+            href: "/dashboard/pages/settings/profile",
+            icon: "UserPen"
+          },
+          {
+            title: "Account",
+            href: "/dashboard/pages/settings/account",
+            icon: "Settings"
+          },
+          {
+            title: "Notifications",
+            href: "/dashboard/pages/settings/notifications",
+            icon: "Bell"
+          },
+          {
+            title: "Display",
+            href: "/dashboard/pages/settings/appearance",
+            icon: "Palette"
+          }
         ]
-      },
-      {
-        title: "Pricing",
-        href: "#",
-        icon: "BadgeDollarSign",
-        items: [
-          { title: "Column Pricing", href: "/dashboard/pages/pricing/column" },
-          { title: "Table Pricing", href: "/dashboard/pages/pricing/table" },
-          { title: "Single Pricing", href: "/dashboard/pages/pricing/single" }
-        ]
-      },
-      {
-        title: "Authentication",
-        href: "/",
-        icon: "Fingerprint",
-        items: [
-          { title: "Login v1", href: "/dashboard/login/v1" },
-          { title: "Login v2", href: "/dashboard/login/v2" },
-          { title: "Register v1", href: "/dashboard/register/v1" },
-          { title: "Register v2", href: "/dashboard/register/v2" },
-          { title: "Forgot Password", href: "/dashboard/forgot-password" }
-        ]
-      },
-      {
-        title: "Error Pages",
-        href: "/",
-        icon: "Fingerprint",
-        items: [
-          { title: "404", href: "/dashboard/pages/error/404" },
-          { title: "500", href: "/dashboard/pages/error/500" },
-          { title: "403", href: "/dashboard/pages/error/403" }
-        ]
-      },
-      {
-        title: "Landing Page",
-        href: "/template/cosmic-landing-page-template",
-        icon: "Proportions",
-        newTab: true
       }
     ]
   }
