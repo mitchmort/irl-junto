@@ -9,19 +9,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProfileStore } from "@/store/useProfileStore";
+import { useUserEvents } from "@/hooks/use-user-events";
 
 export function ProfileCard() {
   const { user, loading: authLoading } = useAuth();
   const { profile, fetchProfile, loading: profileLoading } = useProfileStore();
+  const { events, loading: eventsLoading, getEventStats } = useUserEvents({ type: 'all' });
 
-  // Load profile data if not already loaded
-  React.useEffect(() => {
-    if (user?.id && !profile && !profileLoading) {
-      fetchProfile(user.id);
-    }
-  }, [user?.id, profile, profileLoading, fetchProfile]);
+  // Profile data is loaded by the parent profile page component
 
-  const loading = authLoading || profileLoading;
+  const loading = authLoading || profileLoading || eventsLoading;
+  
+  // Get event statistics
+  const eventStats = getEventStats(events);
 
   if (loading) {
     return (
@@ -65,17 +65,6 @@ export function ProfileCard() {
     .toUpperCase()
     .slice(0, 2);
 
-  // Calculate profile completeness
-  const profileFields = [
-    profile?.full_name,
-    profile?.bio,
-    profile?.avatar_url,
-    profile?.sports?.length,
-    profile?.social_links && Array.isArray(profile.social_links) && profile.social_links.length > 0
-  ];
-  const completedFields = profileFields.filter(Boolean).length;
-  const completionPercentage = Math.round((completedFields / profileFields.length) * 100);
-
   return (
     <Card className="relative">
       <CardContent>
@@ -106,17 +95,15 @@ export function ProfileCard() {
           <div className="bg-muted grid grid-cols-3 divide-x rounded-md border text-center *:py-3">
             <div>
               <h5 className="text-lg font-semibold">{profile?.sports?.length || 0}</h5>
-              <div className="text-muted-foreground text-sm">Sports</div>
+              <div className="text-muted-foreground text-sm">Sports Played</div>
             </div>
             <div>
-              <h5 className="text-lg font-semibold">{completionPercentage}%</h5>
-              <div className="text-muted-foreground text-sm">Complete</div>
+              <h5 className="text-lg font-semibold">{eventStats.totalEvents}</h5>
+              <div className="text-muted-foreground text-sm">Total Events</div>
             </div>
             <div>
-              <h5 className="text-lg font-semibold">
-                {profile?.social_links && Array.isArray(profile.social_links) ? profile.social_links.length : 0}
-              </h5>
-              <div className="text-muted-foreground text-sm">Links</div>
+              <h5 className="text-lg font-semibold">{eventStats.organizedEvents}</h5>
+              <div className="text-muted-foreground text-sm">Events Organized</div>
             </div>
           </div>
           

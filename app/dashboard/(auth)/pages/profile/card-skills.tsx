@@ -1,12 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useEffect } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/components/auth/auth-provider";
 import { useProfileStore } from "@/store/useProfileStore";
 
 // Sports mapping to display proper labels
@@ -20,14 +18,7 @@ const SPORTS_LABELS: Record<string, string> = {
 };
 
 export function CardSkills() {
-  const { user } = useAuth();
-  const { profile, fetchProfile, loading } = useProfileStore();
-
-  useEffect(() => {
-    if (user?.id && !profile) {
-      fetchProfile(user.id);
-    }
-  }, [user?.id, profile, fetchProfile]);
+  const { profile, loading } = useProfileStore();
 
   if (loading) {
     return (

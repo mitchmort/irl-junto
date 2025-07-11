@@ -1,24 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useEffect } from "react";
 import { ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/components/auth/auth-provider";
 import { useProfileStore } from "@/store/useProfileStore";
 
 export function SocialLinks() {
-  const { user } = useAuth();
-  const { profile, fetchProfile, loading } = useProfileStore();
-
-  useEffect(() => {
-    if (user?.id && !profile) {
-      fetchProfile(user.id);
-    }
-  }, [user?.id, profile, fetchProfile]);
+  const { profile, loading } = useProfileStore();
 
   if (loading) {
     return (
@@ -34,11 +25,15 @@ export function SocialLinks() {
     );
   }
 
-  // Parse social links from profile
+  // Parse social links from profile - handle both old and new formats
   const socialLinks = Array.isArray(profile?.social_links) 
     ? profile.social_links
-        .filter((link: any) => link.value && link.value.trim() !== '')
-        .map((link: any) => link.value)
+        .filter((link: any) => {
+          // Handle both {value: string} format and direct string format
+          const url = typeof link === 'string' ? link : link?.value;
+          return url && url.trim() !== '';
+        })
+        .map((link: any) => typeof link === 'string' ? link : link.value)
     : [];
 
   const getDomainFromUrl = (url: string): string => {

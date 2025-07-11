@@ -1,22 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useEffect } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/components/auth/auth-provider";
 import { useProfileStore } from "@/store/useProfileStore";
 
 export function AboutMe() {
-  const { user } = useAuth();
-  const { profile, fetchProfile, loading } = useProfileStore();
-
-  useEffect(() => {
-    if (user?.id && !profile) {
-      fetchProfile(user.id);
-    }
-  }, [user?.id, profile, fetchProfile]);
+  const { profile, loading } = useProfileStore();
 
   if (loading) {
     return (

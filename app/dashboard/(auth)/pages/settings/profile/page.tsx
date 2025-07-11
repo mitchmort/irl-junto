@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -55,7 +55,12 @@ const profileFormSchema = z.object({
   socialLinks: z
     .array(
       z.object({
-        value: z.string().url({ message: "Please enter a valid URL." })
+        value: z.string().refine((val) => {
+          if (!val.trim()) return true; // Allow empty values
+          // Allow URLs with or without protocol
+          const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+          return urlPattern.test(val);
+        }, { message: "Please enter a valid URL or domain." })
       })
     )
     .optional()
@@ -89,20 +94,23 @@ export default function Page() {
     control: form.control
   });
 
+  // Memoize the onFilesChange callback to prevent unnecessary re-renders
+  const handleFilesChange = useCallback((files: any[]) => {
+    if (files.length > 0 && files[0].preview) {
+      setProfilePhotoPreview(files[0].preview);
+      form.setValue("photo", files[0].preview);
+    } else {
+      setProfilePhotoPreview("");
+      form.setValue("photo", "");
+    }
+  }, [form]);
+
   const [fileState, fileActions] = useFileUpload({
     maxFiles: 1,
     maxSize: 5 * 1024 * 1024, // 5MB
     accept: "image/*",
     multiple: false,
-    onFilesChange: (files) => {
-      if (files.length > 0 && files[0].preview) {
-        setProfilePhotoPreview(files[0].preview);
-        form.setValue("photo", files[0].preview);
-      } else {
-        setProfilePhotoPreview("");
-        form.setValue("photo", "");
-      }
-    }
+    onFilesChange: handleFilesChange
   });
 
   // Load profile data on component mount
@@ -112,9 +120,9 @@ export default function Page() {
     }
   }, [user?.id, fetchProfile]);
 
-  // Update form when profile data is loaded
+  // Update form when profile data is loaded (only on initial load)
   useEffect(() => {
-    if (profile) {
+    if (profile && !form.formState.isDirty) {
       const socialLinksArray = Array.isArray(profile.social_links) 
         ? profile.social_links.map((link: any) => ({ value: link.value || link }))
         : [{ value: "" }];
@@ -151,6 +159,10 @@ export default function Page() {
     try {
       await updateProfile(user.id, data);
       console.log("✅ Profile update successful");
+      
+      // Mark form as not dirty after successful save
+      form.reset(form.getValues());
+      
       toast.success("Profile updated successfully!", {
         description: "Your sports profile and preferences have been saved.",
       });

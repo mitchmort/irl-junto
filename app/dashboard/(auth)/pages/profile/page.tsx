@@ -6,7 +6,6 @@ import { Settings } from "lucide-react";
 import { CompleteYourProfileCard } from "./complete-your-profile";
 
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardSkills } from "@/app/dashboard/(auth)/pages/profile/card-skills";
 import { LatestActivity } from "@/app/dashboard/(auth)/pages/profile/latest-activity";
 import { AboutMe } from "@/app/dashboard/(auth)/pages/profile/about-me";
@@ -39,15 +38,6 @@ export default function Page() {
           </Button>
         </div>
       </div>
-
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
-        </TabsList>
-      </Tabs>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-1">

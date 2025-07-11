@@ -3,6 +3,7 @@
 import type React from "react"
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -82,6 +83,15 @@ export const useFileUpload = (
   })
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const previousFilesRef = useRef<FileWithPreview[]>(state.files)
+
+  // Use useEffect to defer onFilesChange callback execution
+  useEffect(() => {
+    if (state.files !== previousFilesRef.current) {
+      previousFilesRef.current = state.files
+      onFilesChange?.(state.files)
+    }
+  }, [state.files, onFilesChange])
 
   const validateFile = useCallback(
     (file: File | FileMetadata): string | null => {
@@ -155,16 +165,13 @@ export const useFileUpload = (
         inputRef.current.value = ""
       }
 
-      const newState = {
+      return {
         ...prev,
         files: [],
         errors: [],
       }
-
-      onFilesChange?.(newState.files)
-      return newState
     })
-  }, [onFilesChange])
+  }, [])
 
   const addFiles = useCallback(
     (newFiles: FileList | File[]) => {
@@ -240,7 +247,6 @@ export const useFileUpload = (
           const newFiles = !multiple
             ? validFiles
             : [...prev.files, ...validFiles]
-          onFilesChange?.(newFiles)
           return {
             ...prev,
             files: newFiles,
@@ -268,7 +274,6 @@ export const useFileUpload = (
       createPreview,
       generateUniqueId,
       clearFiles,
-      onFilesChange,
       onFilesAdded,
     ]
   )
@@ -287,7 +292,6 @@ export const useFileUpload = (
         }
 
         const newFiles = prev.files.filter((file) => file.id !== id)
-        onFilesChange?.(newFiles)
 
         return {
           ...prev,
@@ -296,7 +300,7 @@ export const useFileUpload = (
         }
       })
     },
-    [onFilesChange]
+    []
   )
 
   const clearErrors = useCallback(() => {
