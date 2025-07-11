@@ -28,7 +28,12 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "mcp__supabase__apply_migration",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(timeout 10s npm run dev:*)",
+      "mcp__supabase__list_organizations",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_anon_key",
+      "mcp__supabase__get_organization"
     ],
     "deny": []
   }

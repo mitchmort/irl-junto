@@ -54,7 +54,7 @@ export function useUserActivity() {
           .eq('event_participants.user_id', user.id)
           .eq('status', 'completed')
           .order('date', { ascending: false })
-          .limit(10);
+          .limit(3);
 
         if (queryError) {
           throw queryError;

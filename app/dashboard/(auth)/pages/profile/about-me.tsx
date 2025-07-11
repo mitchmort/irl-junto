@@ -1,30 +1,49 @@
 "use client";
 
 import * as React from "react";
+import { useEffect } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useProfileStore } from "@/store/useProfileStore";
 
 export function AboutMe() {
+  const { user } = useAuth();
+  const { profile, fetchProfile, loading } = useProfileStore();
+
+  useEffect(() => {
+    if (user?.id && !profile) {
+      fetchProfile(user.id);
+    }
+  }, [user?.id, profile, fetchProfile]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>About Me</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const displayBio = profile?.bio || "No bio added yet. Share something about yourself in your profile settings!";
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>About Me</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p>
-          Hi I&#39;m Anna Adam, It will be as simple as Occidental; in fact, it will be Occidental.
-          To an English person, it will seem like simplified English, as a skeptical Cambridge
-          friend of mine told me what Occidental is European languages are members of the same
-          family.
-        </p>
-        <p>
-          You always want to make sure that your fonts work well together and try to limit the
-          number of fonts you use to three or less. Experiment and play around with the fonts that
-          you already have in the software you’re working with reputable font websites. This may be
-          the most commonly encountered tip I received from the designers I spoke with. They highly
-          encourage that you use different fonts in one design, but do not over-exaggerate and go
-          overboard.
-        </p>
+      <CardContent>
+        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+          {displayBio}
+        </div>
       </CardContent>
     </Card>
   );

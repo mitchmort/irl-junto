@@ -8,9 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useProfileStore } from "@/store/useProfileStore";
 
 export function ProfileCard() {
-  const { user, profile, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { profile, fetchProfile, loading: profileLoading } = useProfileStore();
+
+  // Load profile data if not already loaded
+  React.useEffect(() => {
+    if (user?.id && !profile && !profileLoading) {
+      fetchProfile(user.id);
+    }
+  }, [user?.id, profile, profileLoading, fetchProfile]);
+
+  const loading = authLoading || profileLoading;
 
   if (loading) {
     return (
@@ -46,13 +57,24 @@ export function ProfileCard() {
     );
   }
 
-  const displayName = profile?.full_name || user.email?.split('@')[0] || 'User';
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User';
   const initials = displayName
     .split(' ')
     .map(name => name.charAt(0))
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  // Calculate profile completeness
+  const profileFields = [
+    profile?.full_name,
+    profile?.bio,
+    profile?.avatar_url,
+    profile?.sports?.length,
+    profile?.social_links && Array.isArray(profile.social_links) && profile.social_links.length > 0
+  ];
+  const completedFields = profileFields.filter(Boolean).length;
+  const completionPercentage = Math.round((completedFields / profileFields.length) * 100);
 
   return (
     <Card className="relative">
@@ -83,35 +105,40 @@ export function ProfileCard() {
           
           <div className="bg-muted grid grid-cols-3 divide-x rounded-md border text-center *:py-3">
             <div>
-              <h5 className="text-lg font-semibold">-</h5>
-              <div className="text-muted-foreground text-sm">Events</div>
+              <h5 className="text-lg font-semibold">{profile?.sports?.length || 0}</h5>
+              <div className="text-muted-foreground text-sm">Sports</div>
             </div>
             <div>
-              <h5 className="text-lg font-semibold">-</h5>
-              <div className="text-muted-foreground text-sm">Activities</div>
+              <h5 className="text-lg font-semibold">{completionPercentage}%</h5>
+              <div className="text-muted-foreground text-sm">Complete</div>
             </div>
             <div>
-              <h5 className="text-lg font-semibold">-</h5>
-              <div className="text-muted-foreground text-sm">Connections</div>
+              <h5 className="text-lg font-semibold">
+                {profile?.social_links && Array.isArray(profile.social_links) ? profile.social_links.length : 0}
+              </h5>
+              <div className="text-muted-foreground text-sm">Links</div>
             </div>
           </div>
           
           <div className="flex flex-col gap-y-4">
             <div className="flex items-center gap-3">
               <Mail className="text-muted-foreground size-4" /> 
-              {user.email}
+              <span className="text-sm">{user?.email}</span>
             </div>
             {profile?.username && (
               <div className="flex items-center gap-3">
                 <User className="text-muted-foreground size-4" /> 
-                @{profile.username}
+                <span className="text-sm">@{profile.username}</span>
+              </div>
+            )}
+            {profile?.bio && (
+              <div className="text-xs text-muted-foreground line-clamp-2">
+                {profile.bio}
               </div>
             )}
             {profile?.updated_at && (
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground text-sm">
-                  Member since {new Date(profile.updated_at).toLocaleDateString()}
-                </span>
+              <div className="text-xs text-muted-foreground">
+                Member since {new Date(profile.updated_at).toLocaleDateString()}
               </div>
             )}
           </div>

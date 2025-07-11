@@ -55,3 +55,33 @@ If you need to rollback, you can:
 - Prevents event enumeration attacks
 - Makes URLs non-guessable
 - Maintains backward compatibility during transition
+
+## Migration: Add Profile Fields
+
+### File: `002_add_profile_fields.sql`
+
+This migration adds comprehensive profile fields to support the enhanced user profile system.
+
+### What it does:
+1. Adds a `bio` column for user descriptions/bios
+2. Adds a `sports` column (TEXT[]) for storing user's sport preferences
+3. Adds a `social_links` column (JSONB) for storing social media links
+
+### How to apply:
+
+#### Using Supabase Dashboard:
+1. Go to your Supabase project dashboard
+2. Navigate to the SQL Editor
+3. Copy and paste the contents of `002_add_profile_fields.sql`
+4. Run the migration
+
+### After migration:
+- Users can fill out comprehensive profiles in `/dashboard/pages/settings/profile`
+- Public profiles at `/dashboard/pages/profile` will display the saved information
+- Profile data is automatically synced between settings and public views
+
+### Features enabled:
+- Rich user bios displayed in About Me section
+- Sports preferences shown as badges
+- Social links with automatic domain detection
+- Profile completeness tracking

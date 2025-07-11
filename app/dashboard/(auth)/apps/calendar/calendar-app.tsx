@@ -42,9 +42,25 @@ export default function CalendarApp() {
     fetchEvents();
   }, [fetchEvents]);
 
+  // Helper function to check if a date is in the past
+  const isDateInPast = (clickedDate: Date): boolean => {
+    const today = new Date();
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0);
+    
+    const selectedDate = new Date(clickedDate);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    return selectedDate < today;
+  };
+
   const handleDateClick = (arg: DateClickArg) => {
-    setSelectedDate(arg.date);
-    setCreateEventConfirmModalOpen(true);
+    // Only open modal for today or future dates
+    if (!isDateInPast(arg.date)) {
+      setSelectedDate(arg.date);
+      setCreateEventConfirmModalOpen(true);
+    }
+    // For past dates, do nothing (no modal, no feedback)
   };
 
   const handleEventClick = (e: EventClickArg) => {

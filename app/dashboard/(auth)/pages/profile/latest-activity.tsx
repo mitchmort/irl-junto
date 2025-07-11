@@ -92,14 +92,7 @@ export function LatestActivity() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between">
-          <CardTitle>Latest Activity</CardTitle>
-          <Link
-            href="/dashboard/pages/profile?tab=activities"
-            className="text-muted-foreground hover:text-primary text-sm hover:underline">
-            View All
-          </Link>
-        </div>
+        <CardTitle>Latest Activity</CardTitle>
       </CardHeader>
       <CardContent>
         {activities.length === 0 ? (

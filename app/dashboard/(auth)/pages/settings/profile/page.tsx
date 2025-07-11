@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,10 +23,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { CameraIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useProfileStore } from "@/store/useProfileStore";
 
 // Sports options for JUNTO
 const SPORTS_OPTIONS = [
@@ -73,6 +75,8 @@ const defaultValues: Partial<ProfileFormValues> = {
 export default function Page() {
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>("");
   const [sportsDropdownOpen, setSportsDropdownOpen] = useState(false);
+  const { user } = useAuth();
+  const { profile, updateProfile, fetchProfile, saving, error, clearError } = useProfileStore();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -101,11 +105,61 @@ export default function Page() {
     }
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    toast({
-      title: "Profile updated successfully!",
-      description: "Your sports profile and preferences have been saved.",
-    });
+  // Load profile data on component mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile(user.id);
+    }
+  }, [user?.id, fetchProfile]);
+
+  // Update form when profile data is loaded
+  useEffect(() => {
+    if (profile) {
+      const socialLinksArray = Array.isArray(profile.social_links) 
+        ? profile.social_links.map((link: any) => ({ value: link.value || link }))
+        : [{ value: "" }];
+
+      form.reset({
+        name: profile.full_name || "",
+        bio: profile.bio || "Passionate athlete looking to connect with other players for exciting games and events.",
+        photo: profile.avatar_url || "",
+        sports: profile.sports || [],
+        socialLinks: socialLinksArray.length > 0 ? socialLinksArray : [{ value: "" }]
+      });
+
+      if (profile.avatar_url) {
+        setProfilePhotoPreview(profile.avatar_url);
+      }
+    }
+  }, [profile, form]);
+
+  // Clear errors when form values change
+  useEffect(() => {
+    if (error) {
+      clearError();
+    }
+  }, [form.watch(), error, clearError]);
+
+  async function onSubmit(data: ProfileFormValues) {
+    if (!user?.id) {
+      toast.error("User not found. Please try logging in again.");
+      return;
+    }
+
+    console.log("🔍 Profile form submission:", { userId: user.id, formData: data });
+
+    try {
+      await updateProfile(user.id, data);
+      console.log("✅ Profile update successful");
+      toast.success("Profile updated successfully!", {
+        description: "Your sports profile and preferences have been saved.",
+      });
+    } catch (error) {
+      console.error("❌ Profile update failed:", error);
+      toast.error("Failed to update profile", {
+        description: error instanceof Error ? error.message : "Please try again later.",
+      });
+    }
   }
 
   const getNameInitials = (name: string) => {
@@ -348,7 +402,9 @@ export default function Page() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">Update Profile</Button>
+            <Button type="submit" className="w-full" disabled={saving}>
+              {saving ? "Updating..." : "Update Profile"}
+            </Button>
           </form>
         </Form>
       </CardContent>
