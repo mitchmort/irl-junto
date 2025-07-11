@@ -11,9 +11,9 @@ type SocialLink = {
 interface ProfileFormData {
   name: string;
   bio: string;
-  photo: string;
-  sports: string[];
-  socialLinks: SocialLink[];
+  photo?: string;
+  sports?: string[];
+  socialLinks?: SocialLink[];
 }
 
 interface ProfileStore {
@@ -82,10 +82,12 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         full_name: profileData.name,
         bio: profileData.bio,
         avatar_url: profileData.photo || null,
-        sports: profileData.sports.length > 0 ? profileData.sports : null,
+        sports: profileData.sports && profileData.sports.length > 0 ? profileData.sports : null,
         social_links: profileData.socialLinks
-          .filter(link => link.value.trim() !== '')
-          .map(link => ({ value: link.value.trim() })),
+          ? profileData.socialLinks
+              .filter(link => link.value.trim() !== '')
+              .map(link => ({ value: link.value.trim() }))
+          : null,
         updated_at: new Date().toISOString(),
       };
 

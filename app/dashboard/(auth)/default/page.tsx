@@ -4,21 +4,19 @@ import CustomDateRangePicker from "@/components/custom-date-range-picker";
 import { Button } from "@/components/ui/button";
 
 import {
-  ChatWidget,
-  ExerciseMinutes,
-  LatestPayments,
-  PaymentMethodCard,
-  SubscriptionsCard,
-  TeamMembersCard,
-  TotalRevenueCard
+  NextGameHero,
+  QuickStats,
+  TeamMessages,
+  UpcomingGames,
+  PastGamesActivity
 } from "@/app/dashboard/(auth)/default/components";
 import { Download } from "lucide-react";
 
 export async function generateMetadata() {
   return generateMeta({
-    title: "Admin Dashboard",
+    title: "Junto Dashboard",
     description:
-      "The admin dashboard template offers a sleek and efficient interface for monitoring important data and user interactions. Built with shadcn/ui.",
+      "Your sports coordination dashboard - track games, connect with players, and manage your sports activities. Built with shadcn/ui.",
     canonical: "/default"
   });
 }
@@ -27,7 +25,7 @@ export default function Page() {
   return (
     <div className="space-y-4">
       <div className="flex flex-row items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">Dashboard</h1>
+        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">Junto Dashboard</h1>
         <div className="flex items-center space-x-2">
           <CustomDateRangePicker />
           <Button>
@@ -37,17 +35,17 @@ export default function Page() {
         </div>
       </div>
       <div className="gap-4 space-y-4 lg:grid lg:grid-cols-3 lg:space-y-0">
-        <TeamMembersCard />
-        <SubscriptionsCard />
-        <TotalRevenueCard />
-        <ChatWidget />
-        <div className="lg:col-span-2">
-          <ExerciseMinutes />
+        <div className="lg:col-span-3">
+          <QuickStats />
         </div>
         <div className="lg:col-span-2">
-          <LatestPayments />
+          <NextGameHero />
         </div>
-        <PaymentMethodCard />
+        <PastGamesActivity />
+        <div className="lg:col-span-2">
+          <UpcomingGames />
+        </div>
+        <TeamMessages />
       </div>
     </div>
   );

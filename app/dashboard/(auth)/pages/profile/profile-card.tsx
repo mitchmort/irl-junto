@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Link2Icon, Mail, MapPin, PhoneCall, User } from "lucide-react";
+import { Link2Icon, MapPin, PhoneCall, User } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,16 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProfileStore } from "@/store/useProfileStore";
 import { useUserEvents } from "@/hooks/use-user-events";
+
+// Sports mapping to display proper labels
+const SPORTS_LABELS: Record<string, string> = {
+  basketball: "Basketball",
+  tennis: "Tennis", 
+  pickleball: "Pickleball",
+  volleyball: "Volleyball",
+  soccer: "Soccer",
+  climbing: "Climbing",
+};
 
 export function ProfileCard() {
   const { user, loading: authLoading } = useAuth();
@@ -108,19 +118,21 @@ export function ProfileCard() {
           </div>
           
           <div className="flex flex-col gap-y-4">
-            <div className="flex items-center gap-3">
-              <Mail className="text-muted-foreground size-4" /> 
-              <span className="text-sm">{user?.email}</span>
-            </div>
             {profile?.username && (
               <div className="flex items-center gap-3">
                 <User className="text-muted-foreground size-4" /> 
                 <span className="text-sm">@{profile.username}</span>
               </div>
             )}
-            {profile?.bio && (
-              <div className="text-xs text-muted-foreground line-clamp-2">
-                {profile.bio}
+            {profile?.sports && profile.sports.length > 0 && (
+              <div>
+                <div className="flex flex-wrap gap-2">
+                  {profile.sports.map((sportId) => (
+                    <Badge key={sportId} variant="outline" className="text-xs">
+                      {SPORTS_LABELS[sportId] || sportId}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
             {profile?.updated_at && (

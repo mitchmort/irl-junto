@@ -5,3 +5,8 @@ export * from "./exercise-minutes";
 export * from "./total-revenue";
 export * from "./latest-payments";
 export * from "./subscriptions";
+export * from "./next-game-hero";
+export * from "./quick-stats";
+export * from "./team-messages";
+export * from "./upcoming-games";
+export * from "./past-games-activity";

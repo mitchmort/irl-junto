@@ -51,7 +51,7 @@ function EventsContent() {
       case 'joined':
         return { type: 'joined' as const };
       case 'completed':
-        return { type: 'all' as const, status: ['completed'] as const };
+        return { type: 'all' as const, status: ['completed'] as ('upcoming' | 'cancelled' | 'completed')[] };
       default:
         return { type: 'all' as const };
     }
