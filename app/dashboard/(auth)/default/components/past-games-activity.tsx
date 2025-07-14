@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React from "react";
 import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,7 @@ const formatTime = (time: string) => {
   });
 };
 
-export function PastGamesActivity() {
+export const PastGamesActivity = React.memo(function PastGamesActivity() {
   const { activities, loading, error } = useUserActivity();
 
   if (loading) {
@@ -160,4 +160,4 @@ export function PastGamesActivity() {
       </CardContent>
     </Card>
   );
-}
+});

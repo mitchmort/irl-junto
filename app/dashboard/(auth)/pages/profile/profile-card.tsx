@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProfileStore } from "@/store/useProfileStore";
-import { useUserEvents } from "@/hooks/use-user-events";
+import { useProfileData } from "@/hooks/use-profile-data";
 
 // Sports mapping to display proper labels
 const SPORTS_LABELS: Record<string, string> = {
@@ -23,15 +22,18 @@ const SPORTS_LABELS: Record<string, string> = {
 
 export function ProfileCard() {
   const { user, loading: authLoading } = useAuth();
-  const { profile, fetchProfile, loading: profileLoading } = useProfileStore();
-  const { events, loading: eventsLoading, getEventStats } = useUserEvents({ type: 'all' });
+  const { data: profileData, isLoading: profileLoading, error } = useProfileData(user?.id);
 
-  // Profile data is loaded by the parent profile page component
-
-  const loading = authLoading || profileLoading || eventsLoading;
+  const loading = authLoading || profileLoading;
   
-  // Get event statistics
-  const eventStats = getEventStats(events);
+  // Extract data from consolidated hook
+  const profile = profileData?.profile;
+  const stats = profileData?.stats || {
+    totalSports: 0,
+    totalEvents: 0,
+    organizedEvents: 0,
+    recentActivities: 0
+  };
 
   if (loading) {
     return (
@@ -108,11 +110,11 @@ export function ProfileCard() {
               <div className="text-muted-foreground text-sm">Sports Played</div>
             </div>
             <div>
-              <h5 className="text-lg font-semibold">{eventStats.totalEvents}</h5>
+              <h5 className="text-lg font-semibold">{stats.totalEvents}</h5>
               <div className="text-muted-foreground text-sm">Total Events</div>
             </div>
             <div>
-              <h5 className="text-lg font-semibold">{eventStats.organizedEvents}</h5>
+              <h5 className="text-lg font-semibold">{stats.organizedEvents}</h5>
               <div className="text-muted-foreground text-sm">Events Organized</div>
             </div>
           </div>

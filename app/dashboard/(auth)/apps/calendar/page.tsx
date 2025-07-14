@@ -1,10 +1,22 @@
 import { generateMeta } from "@/lib/utils";
-import CalendarApp from "@/app/dashboard/(auth)/apps/calendar/calendar-app";
-import CalendarSidebar from "@/app/dashboard/(auth)/apps/calendar/calendar-sidebar";
-import EventSheet from "@/app/dashboard/(auth)/apps/calendar/event-sheet";
-import EventDetailsSheetWrapper from "@/app/dashboard/(auth)/apps/calendar/event-details-sheet-wrapper";
-import EventCreationConfirmationModal from "@/app/dashboard/(auth)/apps/calendar/event-creation-confirmation-modal";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
+
+// Lazy load heavy calendar components
+const CalendarApp = dynamic(() => import("@/app/dashboard/(auth)/apps/calendar/calendar-app"), {
+  loading: () => <Skeleton className="h-96 w-full" />
+});
+
+const CalendarSidebar = dynamic(() => import("@/app/dashboard/(auth)/apps/calendar/calendar-sidebar"), {
+  loading: () => <Skeleton className="h-96 w-64" />
+});
+
+const EventSheet = dynamic(() => import("@/app/dashboard/(auth)/apps/calendar/event-sheet"));
+
+const EventDetailsSheetWrapper = dynamic(() => import("@/app/dashboard/(auth)/apps/calendar/event-details-sheet-wrapper"));
+
+const EventCreationConfirmationModal = dynamic(() => import("@/app/dashboard/(auth)/apps/calendar/event-creation-confirmation-modal"));
 
 export async function generateMetadata() {
   return generateMeta({

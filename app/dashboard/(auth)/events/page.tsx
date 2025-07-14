@@ -1,38 +1,133 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { generateMeta } from "@/lib/utils";
 import Link from "next/link";
 import { PlusCircle, AlertCircle } from "lucide-react";
 import { useUserEvents } from "@/hooks/use-user-events";
 import { useSearchParams } from "next/navigation";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EventList from "@/app/dashboard/(auth)/events/event-list";
+import ErrorBoundary from "@/components/error-boundary";
 
 // Loading skeleton component
 function EventsPageSkeleton() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between space-y-2">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-28" />
       </div>
+      
+      {/* Enhanced stats skeleton */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array(4).fill(0).map((_, i) => (
           <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-16" />
+            <CardHeader className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-8 w-12" />
+              <Skeleton className="h-5 w-16" />
             </CardHeader>
           </Card>
         ))}
       </div>
+      
+      {/* Enhanced table skeleton */}
       <div className="pt-4">
-        <Skeleton className="h-64 w-full" />
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 w-32" />
+              <div className="ml-auto">
+                <Skeleton className="h-10 w-24" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {/* Desktop table skeleton */}
+              <div className="hidden md:block">
+                <div className="border rounded-lg">
+                  <div className="border-b px-4 py-3">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                  </div>
+                  {Array(8).fill(0).map((_, i) => (
+                    <div key={i} className="border-b last:border-b-0 px-4 py-3">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-4" />
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-12 w-12 rounded-lg" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Mobile cards skeleton */}
+              <div className="md:hidden space-y-3">
+                {Array(6).fill(0).map((_, i) => (
+                  <div key={i} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-lg" />
+                      <Skeleton className="h-5 w-32" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4" />
+                        <Skeleton className="h-4 w-28" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4" />
+                        <Skeleton className="h-4 w-36" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-8" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-5 w-18 rounded-full" />
+                      </div>
+                      <Skeleton className="h-8 w-8" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Pagination skeleton */}
+              <div className="flex items-center justify-between pt-4">
+                <Skeleton className="h-4 w-24" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -42,23 +137,42 @@ function EventsPageSkeleton() {
 function EventsContent() {
   const searchParams = useSearchParams();
   const filter = searchParams.get('filter') || 'all';
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   
   // Map filter to the correct parameters for useUserEvents
-  const getEventFilters = () => {
+  const getEventFilters = useMemo(() => {
+    const baseFilters = {
+      page: currentPage,
+      limit: 20,
+      search: debouncedSearch
+    };
+    
     switch (filter) {
       case 'organized':
-        return { type: 'organized' as const };
+        return { ...baseFilters, type: 'organized' as const };
       case 'joined':
-        return { type: 'joined' as const };
+        return { ...baseFilters, type: 'joined' as const };
       case 'completed':
-        return { type: 'all' as const, status: ['completed'] as ('upcoming' | 'cancelled' | 'completed')[] };
+        return { ...baseFilters, type: 'all' as const, status: ['completed'] as ('upcoming' | 'cancelled' | 'completed')[] };
       default:
-        return { type: 'all' as const };
+        return { ...baseFilters, type: 'all' as const };
     }
+  }, [filter, currentPage, debouncedSearch]);
+  
+  const { events, loading, error, getEventStats, totalCount, hasNextPage, hasPreviousPage } = useUserEvents(getEventFilters);
+  const stats = getEventStats(events);
+  
+  // Reset to page 1 when filter or search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
   };
   
-  const { events, loading, error, getEventStats } = useUserEvents(getEventFilters());
-  const stats = getEventStats(events);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
   
   // Get page title based on filter
   const getPageTitle = () => {
@@ -179,6 +293,13 @@ function EventsContent() {
           data={events} 
           hideFilters={filter !== 'all'}
           filterContext={filter}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          currentPage={currentPage}
+          totalCount={totalCount}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>
@@ -188,8 +309,10 @@ function EventsContent() {
 // Main page component with Suspense boundary
 export default function Page() {
   return (
-    <Suspense fallback={<EventsPageSkeleton />}>
-      <EventsContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<EventsPageSkeleton />}>
+        <EventsContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

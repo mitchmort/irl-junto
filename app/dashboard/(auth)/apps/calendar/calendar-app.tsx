@@ -16,10 +16,12 @@ import { eventColors } from "@/app/dashboard/(auth)/apps/calendar/data";
 import { EventClickArg } from "@fullcalendar/core";
 import CalendarToolbar from "@/app/dashboard/(auth)/apps/calendar/calendar-toolbar";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import EventPreviewModal from "@/app/dashboard/(auth)/apps/calendar/event-preview-modal";
 
-export default function CalendarApp() {
+const CalendarApp = React.memo(function CalendarApp() {
   const calendarRef = React.useRef<FullCalendar>(null);
+  
   const { 
     events, 
     loading, 
@@ -96,12 +98,12 @@ export default function CalendarApp() {
         <div className="text-center">
           <p className="text-red-500 mb-2">Error loading events</p>
           <p className="text-sm text-muted-foreground mb-4">{error}</p>
-          <button 
+          <Button 
             onClick={fetchEvents}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-4 py-2"
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -137,4 +139,8 @@ export default function CalendarApp() {
       />
     </>
   );
-}
+});
+
+CalendarApp.displayName = 'CalendarApp';
+
+export default CalendarApp;

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React from "react";
 import { Send, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,7 +58,7 @@ const mockMessages = [
   }
 ];
 
-export function TeamMessages() {
+export const TeamMessages = React.memo(function TeamMessages() {
   const [messages, setMessages] = React.useState(mockMessages);
   const [input, setInput] = React.useState("");
   const inputLength = input.trim().length;
@@ -149,4 +149,4 @@ export function TeamMessages() {
       </CardFooter>
     </Card>
   );
-}
+});

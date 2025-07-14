@@ -130,16 +130,47 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
     set({ loading: true, error: null });
     
     try {
+      // Get current user to filter events
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        set({ events: [], loading: false });
+        return;
+      }
+
+      // Simple query - fetch all events with participants, then filter client-side
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          event_participants(
+            user_id,
+            status,
+            role
+          )
+        `)
         .order('date', { ascending: true });
 
       if (error) throw error;
 
-      const calendarEvents = data.map(convertToCalendarEvent);
+      // Filter to only events where user is organizer or participant
+      const userEvents = (data || []).filter(event => {
+        const isOrganizer = event.organizer === user.id;
+        const isParticipant = event.event_participants?.some((p: any) => p.user_id === user.id);
+        return isOrganizer || isParticipant;
+      });
+
+      const calendarEvents = userEvents.map(event => {
+        // Calculate participant count from the relationship
+        const participantCount = event.event_participants?.length || 0;
+        return convertToCalendarEvent({
+          ...event,
+          participant_count: participantCount
+        });
+      });
+      
       set({ events: calendarEvents, loading: false });
     } catch (error: any) {
+      console.error('Calendar fetch error:', error);
       set({ error: error.message, loading: false });
       handleError(error);
     }

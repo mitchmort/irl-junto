@@ -1,16 +1,56 @@
 import { generateMeta } from "@/lib/utils";
+import { Suspense } from "react";
 
 import CustomDateRangePicker from "@/components/custom-date-range-picker";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 import {
   NextGameHero,
   QuickStats,
-  TeamMessages,
   UpcomingGames,
-  PastGamesActivity
 } from "@/app/dashboard/(auth)/default/components";
 import { Download } from "lucide-react";
+
+// Lazy load heavy components
+import dynamic from "next/dynamic";
+
+const TeamMessages = dynamic(
+  () => import("@/app/dashboard/(auth)/default/components").then((mod) => ({ default: mod.TeamMessages })),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+);
+
+const PastGamesActivity = dynamic(
+  () => import("@/app/dashboard/(auth)/default/components").then((mod) => ({ default: mod.PastGamesActivity })),
+  {
+    loading: () => (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+);
 
 export async function generateMetadata() {
   return generateMeta({

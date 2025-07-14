@@ -7,7 +7,8 @@ import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUserActivity } from "@/hooks/use-user-activity";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useProfileData } from "@/hooks/use-profile-data";
 
 // Map sport types to icons for better visual representation
 const getSportIcon = (sport: string) => {
@@ -48,7 +49,10 @@ const formatTime = (time: string) => {
 };
 
 export function LatestActivity() {
-  const { activities, loading, error } = useUserActivity();
+  const { user } = useAuth();
+  const { data: profileData, isLoading: loading, error } = useProfileData(user?.id);
+  
+  const activities = profileData?.activities || [];
 
   if (loading) {
     return (

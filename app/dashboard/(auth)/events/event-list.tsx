@@ -358,7 +358,7 @@ export const columns: ColumnDef<Event>[] = [
 ];
 
 // Mobile Event Card Component
-const MobileEventCard = ({ event }: { event: Event }) => {
+const MobileEventCard = React.memo(({ event }: { event: Event }) => {
   // Parse location JSON to get venue name
   let venueName = '';
   try {
@@ -463,16 +463,30 @@ const MobileEventCard = ({ event }: { event: Event }) => {
       </div>
     </div>
   );
-};
+});
 
-export default function EventList({ 
+const EventListComponent = React.memo(function EventList({ 
   data, 
   hideFilters = false,
-  filterContext
+  filterContext,
+  searchQuery = '',
+  onSearchChange,
+  currentPage = 1,
+  totalCount = 0,
+  hasNextPage = false,
+  hasPreviousPage = false,
+  onPageChange
 }: { 
   data: Event[],
   hideFilters?: boolean,
-  filterContext?: string 
+  filterContext?: string,
+  searchQuery?: string,
+  onSearchChange?: (value: string) => void,
+  currentPage?: number,
+  totalCount?: number,
+  hasNextPage?: boolean,
+  hasPreviousPage?: boolean,
+  onPageChange?: (page: number) => void
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -498,51 +512,22 @@ export default function EventList({
     }
   });
 
-  const statuses = [
-    {
-      value: "upcoming",
-      label: "Upcoming"
-    },
-    {
-      value: "full",
-      label: "Full"
-    },
-    {
-      value: "completed",
-      label: "Completed"
-    },
-    {
-      value: "cancelled",
-      label: "Cancelled"
-    }
-  ];
+  // Memoize expensive filter arrays
+  const statuses = React.useMemo(() => [
+    { value: "upcoming", label: "Upcoming" },
+    { value: "full", label: "Full" },
+    { value: "completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" }
+  ], []);
 
-  const sportTypes = [
-    {
-      value: "basketball",
-      label: "Basketball"
-    },
-    {
-      value: "tennis",
-      label: "Tennis"
-    },
-    {
-      value: "pickleball",
-      label: "Pickleball"
-    },
-    {
-      value: "volleyball",
-      label: "Volleyball"
-    },
-    {
-      value: "soccer",
-      label: "Soccer"
-    },
-    {
-      value: "climbing",
-      label: "Climbing"
-    }
-  ];
+  const sportTypes = React.useMemo(() => [
+    { value: "basketball", label: "Basketball" },
+    { value: "tennis", label: "Tennis" },
+    { value: "pickleball", label: "Pickleball" },
+    { value: "volleyball", label: "Volleyball" },
+    { value: "soccer", label: "Soccer" },
+    { value: "climbing", label: "Climbing" }
+  ], []);
 
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [sportTypeFilter, setSportTypeFilter] = React.useState<string[]>([]);
@@ -732,8 +717,8 @@ export default function EventList({
           <div className="flex gap-2">
             <Input
               placeholder="Search events..."
-              value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-              onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
+              value={searchQuery}
+              onChange={(event) => onSearchChange?.(event.target.value)}
               className="max-w-sm"
             />
             {!hideFilters && <Filters />}
@@ -770,8 +755,8 @@ export default function EventList({
           <div className="flex gap-2">
             <Input
               placeholder="Search events..."
-              value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-              onChange={(event) => table.getColumn("title")?.setFilterValue(event.target.value)}
+              value={searchQuery}
+              onChange={(event) => onSearchChange?.(event.target.value)}
               className="flex-1"
             />
             {!hideFilters && (
@@ -842,22 +827,21 @@ export default function EventList({
             </div>
             <div className="flex items-center justify-end space-x-2">
               <div className="text-muted-foreground flex-1 text-sm">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
+                Page {currentPage} of {Math.ceil(totalCount / 20)} ({totalCount} total events)
               </div>
               <div className="space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}>
+                  onClick={() => onPageChange?.(currentPage - 1)}
+                  disabled={!hasPreviousPage}>
                   Previous
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}>
+                  onClick={() => onPageChange?.(currentPage + 1)}
+                  disabled={!hasNextPage}>
                   Next
                 </Button>
               </div>
@@ -875,21 +859,21 @@ export default function EventList({
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="text-muted-foreground text-sm">
-                    {table.getFilteredRowModel().rows.length} event(s)
+                    Page {currentPage} of {Math.ceil(totalCount / 20)}
                   </div>
                   <div className="space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}>
+                      onClick={() => onPageChange?.(currentPage - 1)}
+                      disabled={!hasPreviousPage}>
                       Previous
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}>
+                      onClick={() => onPageChange?.(currentPage + 1)}
+                      disabled={!hasNextPage}>
                       Next
                     </Button>
                   </div>
@@ -905,4 +889,9 @@ export default function EventList({
       </CardContent>
     </Card>
   );
-}
+});
+
+MobileEventCard.displayName = 'MobileEventCard';
+EventListComponent.displayName = 'EventList';
+
+export default EventListComponent;

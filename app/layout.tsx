@@ -11,6 +11,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { ErrorSuppressionClient } from "@/components/error-suppression-client";
 import { DEFAULT_THEME } from "@/lib/themes";
 
 export default async function RootLayout({
@@ -45,12 +47,15 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange>
           <ActiveThemeProvider initialTheme={themeSettings}>
-            <AuthProvider>
-              {children}
-              <Toaster />
-              <NextTopLoader color="var(--primary)" showSpinner={false} height={2} shadow-sm="none" />
-              {process.env.NODE_ENV === "production" ? <GoogleAnalyticsInit /> : null}
-            </AuthProvider>
+            <QueryProvider>
+              <AuthProvider>
+                <ErrorSuppressionClient />
+                {children}
+                <Toaster />
+                <NextTopLoader color="var(--primary)" showSpinner={false} height={2} shadow-sm="none" />
+                {process.env.NODE_ENV === "production" ? <GoogleAnalyticsInit /> : null}
+              </AuthProvider>
+            </QueryProvider>
           </ActiveThemeProvider>
         </ThemeProvider>
       </body>

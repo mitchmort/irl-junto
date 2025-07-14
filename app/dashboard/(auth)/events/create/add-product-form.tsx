@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -249,10 +250,11 @@ export default function AddProductForm() {
                                 <div
                                   key={file.id}
                                   className="bg-accent relative aspect-square rounded-md border">
-                                  <img
-                                    src={file.preview}
+                                  <Image
+                                    src={file.preview || ''}
                                     alt={file.file.name}
-                                    className="size-full rounded-[inherit] object-cover"
+                                    fill
+                                    className="rounded-[inherit] object-cover"
                                   />
                                   <Button
                                     type="button"

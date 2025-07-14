@@ -52,9 +52,9 @@ export function useUserActivity() {
             )
           `)
           .eq('event_participants.user_id', user.id)
-          .eq('status', 'completed')
+          .lt('date', new Date().toISOString().split('T')[0])
           .order('date', { ascending: false })
-          .limit(3);
+          .limit(5);
 
         if (queryError) {
           throw queryError;
