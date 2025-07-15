@@ -1,4 +1,23 @@
 {
+  "mcpServers": {
+    "twilio": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@twilio-alpha/mcp",
+        "--services",
+        "{\"api_v2010\": true}",
+        "--tags",
+        "{\"Accounts\": true, \"Messages\": true, \"IncomingPhoneNumbers\": true, \"AvailablePhoneNumbers\": true}"
+      ],
+      "env": {
+        "TWILIO_API_KEY": "SKbc4efa5210be2a90f531717db3f1c0a9",
+        "TWILIO_API_SECRET": "WR51fu6HKwwzOLsntDa01rV4VGO9Kaaz",
+        "TWILIO_ACCOUNT_SID": "AC4f09eaf00171644386c6fe726cb2f081",
+        "TWILIO_PHONE_NUMBER": "+14247226272"
+      }
+    }
+  },
   "permissions": {
     "allow": [
       "Bash(claude --version)",
@@ -35,7 +54,8 @@
       "mcp__supabase__get_anon_key",
       "mcp__supabase__get_organization",
       "mcp__supabase__get_advisors",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

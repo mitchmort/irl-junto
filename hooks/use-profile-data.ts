@@ -53,7 +53,7 @@ async function fetchProfileData(userId: string): Promise<ProfileData> {
         .eq('event_participants.user_id', userId)
         .lt('date', new Date().toISOString().split('T')[0])
         .order('date', { ascending: false })
-        .limit(5),
+        .limit(3),
 
       // User events (all events user is involved in)
       supabase
@@ -74,19 +74,21 @@ async function fetchProfileData(userId: string): Promise<ProfileData> {
     const rawActivities = activitiesResult.data || [];
     const rawEvents = eventsResult.data || [];
 
-    // Transform activities data
-    const activities: UserActivity[] = rawActivities.map(event => ({
-      id: event.id,
-      title: event.title,
-      sport: event.sport,
-      date: event.date,
-      time: event.time,
-      location: event.location,
-      participant_count: event.participant_count,
-      role: event.event_participants[0]?.role || 'participant',
-      status: event.event_participants[0]?.status || 'attended',
-      event_created: event.created_at || new Date().toISOString()
-    }));
+    // Transform activities data - filter valid activities only
+    const activities: UserActivity[] = rawActivities
+      .filter(event => event && event.id && event.title) // Filter out invalid data
+      .map(event => ({
+        id: event.id,
+        title: event.title || 'Untitled Event',
+        sport: event.sport || 'general',
+        date: event.date || new Date().toISOString().split('T')[0],
+        time: event.time || '12:00',
+        location: event.location || 'Location TBD',
+        participant_count: event.participant_count || 0,
+        role: event.event_participants?.[0]?.role || 'participant',
+        status: event.event_participants?.[0]?.status || 'attended',
+        event_created: event.created_at || new Date().toISOString()
+      }));
 
     // Transform events data with user role information
     const events: UserEvent[] = rawEvents.map(event => {

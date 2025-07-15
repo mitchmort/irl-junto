@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useProfileData } from "@/hooks/use-profile-data";
+import { parseLocationData } from "@/lib/location-utils";
 
 // Map sport types to icons for better visual representation
 const getSportIcon = (sport: string) => {
@@ -52,7 +53,7 @@ export function LatestActivity() {
   const { user } = useAuth();
   const { data: profileData, isLoading: loading, error } = useProfileData(user?.id);
   
-  const activities = profileData?.activities || [];
+  const activities = (profileData?.activities || []).slice(0, 3);
 
   if (loading) {
     return (
@@ -113,28 +114,28 @@ export function LatestActivity() {
                   {getSportIcon(activity.sport)}
                 </span>
                 <h3 className="flex items-center font-semibold">
-                  {activity.role === 'organizer' ? 'Organized' : 'Joined'} {activity.title}
+                  {activity.role === 'organizer' ? 'Organized' : 'Joined'} {activity.title || 'Untitled Event'}
                   <Badge variant="outline" className="ms-2 capitalize">
-                    {activity.role}
+                    {activity.role || 'participant'}
                   </Badge>
                 </h3>
                 <div className="flex items-center gap-4 text-muted-foreground text-sm">
                   <div className="flex items-center gap-1">
                     <CalendarIcon className="size-3" />
-                    {formatDate(activity.date)}
+                    {activity.date ? formatDate(activity.date) : 'Date TBD'}
                   </div>
                   <div className="flex items-center gap-1">
                     <ClockIcon className="size-3" />
-                    {formatTime(activity.time)}
+                    {activity.time ? formatTime(activity.time) : 'Time TBD'}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground text-sm">
                   <MapPinIcon className="size-3" />
-                  {activity.location}
+                  {parseLocationData(activity.location || 'Location TBD')}
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground text-sm">
                   <UsersIcon className="size-3" />
-                  {activity.participant_count} {activity.participant_count === 1 ? 'participant' : 'participants'}
+                  {activity.participant_count || 0} {(activity.participant_count || 0) === 1 ? 'participant' : 'participants'}
                 </div>
               </li>
             ))}
