@@ -1,0 +1,205 @@
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { smsService } from '@/lib/twilio/sms-service';
+import { twilioClient } from '@/lib/twilio/client';
+import { supabase } from '@/lib/supabase/server';
+
+// Mock dependencies
+jest.mock('@/lib/twilio/client');
+jest.mock('@/lib/supabase/server');
+
+const mockTwilioClient = twilioClient as jest.Mocked<typeof twilioClient>;
+const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+
+describe('SMS Service', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('sendSMS', () => {
+    it('should send SMS successfully', async () => {
+      const mockMessage = {
+        sid: 'SM123456789',
+        status: 'queued',
+        to: '+1234567890',
+        from: '+1987654321',
+        body: 'Test message',
+        dateCreated: new Date(),
+        errorCode: null,
+        errorMessage: null,
+      };
+
+      mockTwilioClient.messages.create.mockResolvedValue(mockMessage as any);
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue({ data: [{}], error: null }),
+        }),
+      } as any);
+
+      const result = await smsService.sendSMS('+1234567890', 'Test message', 'test-user-id');
+
+      expect(result.success).toBe(true);
+      expect(result.twilioSid).toBe('SM123456789');
+      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith({
+        body: 'Test message',
+        to: '+1234567890',
+        from: process.env.TWILIO_PHONE_NUMBER,
+        statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL}/api/twilio/webhook/status`,
+      });
+    });
+
+    it('should handle Twilio errors', async () => {
+      const twilioError = {
+        code: 21608,
+        message: 'The number +1234567890 is unverified',
+        status: 400,
+      };
+
+      mockTwilioClient.messages.create.mockRejectedValue(twilioError);
+
+      const result = await smsService.sendSMS('+1234567890', 'Test message', 'test-user-id');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('The number +1234567890 is unverified');
+    });
+
+    it('should respect rate limits', async () => {
+      // Mock rate limit exceeded
+      jest.spyOn(smsService as any, 'checkRateLimit').mockResolvedValue(false);
+
+      const result = await smsService.sendSMS('+1234567890', 'Test message', 'test-user-id');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Rate limit exceeded for phone number +1234567890');
+    });
+  });
+
+  describe('sendBulkSMS', () => {
+    it('should send bulk SMS with proper batching', async () => {
+      const recipients = [
+        { phone: '+1234567890', userId: 'user1' },
+        { phone: '+1234567891', userId: 'user2' },
+        { phone: '+1234567892', userId: 'user3' },
+      ];
+
+      mockTwilioClient.messages.create.mockResolvedValue({
+        sid: 'SM123456789',
+        status: 'queued',
+      } as any);
+
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue({ data: [{}], error: null }),
+        }),
+      } as any);
+
+      const result = await smsService.sendBulkSMS(recipients, 'Bulk message');
+
+      expect(result.sent).toBe(3);
+      expect(result.failed).toBe(0);
+      expect(mockTwilioClient.messages.create).toHaveBeenCalledTimes(3);
+    });
+
+    it('should handle partial failures in bulk send', async () => {
+      const recipients = [
+        { phone: '+1234567890', userId: 'user1' },
+        { phone: '+1234567891', userId: 'user2' },
+      ];
+
+      mockTwilioClient.messages.create
+        .mockResolvedValueOnce({ sid: 'SM123456789', status: 'queued' } as any)
+        .mockRejectedValueOnce(new Error('Failed to send'));
+
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue({ data: [{}], error: null }),
+        }),
+      } as any);
+
+      const result = await smsService.sendBulkSMS(recipients, 'Bulk message');
+
+      expect(result.sent).toBe(1);
+      expect(result.failed).toBe(1);
+    });
+  });
+
+  describe('sendVerificationCode', () => {
+    it('should send verification code successfully', async () => {
+      const mockMessage = {
+        sid: 'SM123456789',
+        status: 'queued',
+      };
+
+      mockTwilioClient.messages.create.mockResolvedValue(mockMessage as any);
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue({ data: [{}], error: null }),
+        }),
+        update: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [{}], error: null }),
+        }),
+      } as any);
+
+      const result = await smsService.sendVerificationCode('+1234567890', '123456', 'test-user-id');
+
+      expect(result.success).toBe(true);
+      expect(result.twilioSid).toBe('SM123456789');
+      expect(mockTwilioClient.messages.create).toHaveBeenCalledWith({
+        body: 'Your Junto verification code is: 123456',
+        to: '+1234567890',
+        from: process.env.TWILIO_PHONE_NUMBER,
+        statusCallback: `${process.env.NEXT_PUBLIC_BASE_URL}/api/twilio/webhook/status`,
+      });
+    });
+  });
+
+  describe('Rate Limiting', () => {
+    it('should enforce rate limits per phone number', async () => {
+      // Mock Redis or in-memory store for rate limiting
+      const rateLimitStore = new Map();
+      jest.spyOn(smsService as any, 'getRateLimitStore').mockReturnValue(rateLimitStore);
+
+      const phoneNumber = '+1234567890';
+      
+      // First call should succeed
+      const result1 = await (smsService as any).checkRateLimit(phoneNumber);
+      expect(result1).toBe(true);
+
+      // Simulate 30 calls within a minute (rate limit)
+      for (let i = 0; i < 30; i++) {
+        await (smsService as any).checkRateLimit(phoneNumber);
+      }
+
+      // 31st call should fail
+      const result2 = await (smsService as any).checkRateLimit(phoneNumber);
+      expect(result2).toBe(false);
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should map Twilio error codes correctly', () => {
+      const errorMappings = [
+        { code: 21608, expected: 'Phone number is unverified' },
+        { code: 21614, expected: 'Invalid phone number format' },
+        { code: 21211, expected: 'Invalid phone number' },
+        { code: 30001, expected: 'Message queue full' },
+        { code: 30002, expected: 'Account suspended' },
+        { code: 30003, expected: 'Unreachable destination' },
+        { code: 30004, expected: 'Message blocked' },
+        { code: 30005, expected: 'Unknown destination' },
+        { code: 30006, expected: 'Landline or unreachable carrier' },
+        { code: 30007, expected: 'Message filtered' },
+        { code: 30008, expected: 'Unknown error' },
+      ];
+
+      errorMappings.forEach(({ code, expected }) => {
+        const result = (smsService as any).mapTwilioError(code);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle unknown Twilio error codes', () => {
+      const result = (smsService as any).mapTwilioError(99999);
+      expect(result).toBe('Unknown SMS error');
+    });
+  });
+});

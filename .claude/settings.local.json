@@ -1,61 +1,23 @@
 {
-  "mcpServers": {
-    "twilio": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@twilio-alpha/mcp",
-        "--services",
-        "{\"api_v2010\": true}",
-        "--tags",
-        "{\"Accounts\": true, \"Messages\": true, \"IncomingPhoneNumbers\": true, \"AvailablePhoneNumbers\": true}"
-      ],
-      "env": {
-        "TWILIO_API_KEY": "SKbc4efa5210be2a90f531717db3f1c0a9",
-        "TWILIO_API_SECRET": "WR51fu6HKwwzOLsntDa01rV4VGO9Kaaz",
-        "TWILIO_ACCOUNT_SID": "AC4f09eaf00171644386c6fe726cb2f081",
-        "TWILIO_PHONE_NUMBER": "+14247226272"
-      }
-    }
-  },
   "permissions": {
     "allow": [
-      "Bash(claude --version)",
-      "Bash(ls:*)",
-      "Bash(npm i:*)",
-      "Bash(find:*)",
-      "Bash(compgen:*)",
       "Bash(env)",
+      "Bash(source:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
       "Bash(npx:*)",
-      "Bash(cp:*)",
-      "Bash(npm run dev:*)",
-      "Bash(curl:*)",
-      "Bash(pkill:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm run lint)",
-      "Bash(git diff:*)",
-      "Bash(git add:*)",
-      "Bash(rm:*)",
-      "Bash(grep:*)",
-      "Bash(rg:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(claude mcp:*)",
+      "Bash(npm install:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
       "mcp__supabase__list_projects",
-      "mcp__supabase__get_project",
-      "mcp__supabase__get_logs",
-      "mcp__supabase__list_tables",
-      "mcp__supabase__list_migrations",
-      "mcp__supabase__execute_sql",
-      "Bash(mkdir:*)",
-      "Bash(mv:*)",
       "mcp__supabase__apply_migration",
-      "Bash(true)",
-      "Bash(timeout 10s npm run dev:*)",
-      "mcp__supabase__list_organizations",
-      "mcp__supabase__get_project_url",
-      "mcp__supabase__get_anon_key",
-      "mcp__supabase__get_organization",
-      "mcp__supabase__get_advisors",
-      "Bash(tail:*)",
-      "Bash(npm run:*)"
+      "Bash(npm test)",
+      "Bash(npm test:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

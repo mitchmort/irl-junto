@@ -204,6 +204,9 @@ export type Database = {
           id: string
           name: string | null
           phone_number: string
+          phone_verified: boolean | null
+          phone_verification_code: string | null
+          phone_verification_expires: string | null
           updated_at: string | null
         }
         Insert: {
@@ -212,6 +215,9 @@ export type Database = {
           id?: string
           name?: string | null
           phone_number: string
+          phone_verified?: boolean | null
+          phone_verification_code?: string | null
+          phone_verification_expires?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -220,9 +226,167 @@ export type Database = {
           id?: string
           name?: string | null
           phone_number?: string
+          phone_verified?: boolean | null
+          phone_verification_code?: string | null
+          phone_verification_expires?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          sms_reminders: boolean | null
+          sms_event_updates: boolean | null
+          sms_organizer_messages: boolean | null
+          reminder_24h: boolean | null
+          reminder_2h: boolean | null
+          timezone: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sms_reminders?: boolean | null
+          sms_event_updates?: boolean | null
+          sms_organizer_messages?: boolean | null
+          reminder_24h?: boolean | null
+          reminder_2h?: boolean | null
+          timezone?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sms_reminders?: boolean | null
+          sms_event_updates?: boolean | null
+          sms_organizer_messages?: boolean | null
+          reminder_24h?: boolean | null
+          reminder_2h?: boolean | null
+          timezone?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      notifications_log: {
+        Row: {
+          id: string
+          user_id: string
+          event_id: number | null
+          type: string
+          channel: string
+          message: string
+          twilio_sid: string | null
+          status: string
+          error_message: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          delivered_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_id?: number | null
+          type: string
+          channel?: string
+          message: string
+          twilio_sid?: string | null
+          status?: string
+          error_message?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          delivered_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_id?: number | null
+          type?: string
+          channel?: string
+          message?: string
+          twilio_sid?: string | null
+          status?: string
+          error_message?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          delivered_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      event_messages: {
+        Row: {
+          id: string
+          event_id: number
+          sender_id: string
+          message: string
+          message_type: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          event_id: number
+          sender_id: string
+          message: string
+          message_type?: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          event_id?: number
+          sender_id?: string
+          message?: string
+          message_type?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_messages_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
@@ -396,4 +560,32 @@ export type DashboardKPIs = Tables<"dashboard_kpis">
 // Type for event participant with joined profile data
 export type EventParticipantWithProfile = EventParticipant & {
   profiles: Profile | null;
-} 
+}
+
+// New notification-related types
+export type NotificationPreferences = Tables<"notification_preferences">
+export type NotificationPreferencesInsert = TablesInsert<"notification_preferences">
+export type NotificationPreferencesUpdate = TablesUpdate<"notification_preferences">
+
+export type NotificationLog = Tables<"notifications_log">
+export type NotificationLogInsert = TablesInsert<"notifications_log">
+export type NotificationLogUpdate = TablesUpdate<"notifications_log">
+
+export type EventMessage = Tables<"event_messages">
+export type EventMessageInsert = TablesInsert<"event_messages">
+export type EventMessageUpdate = TablesUpdate<"event_messages">
+
+// Extended types for notifications
+export type NotificationLogWithEvent = NotificationLog & {
+  events: Event | null;
+}
+
+export type EventMessageWithSender = EventMessage & {
+  sender: User | null;
+}
+
+// Notification types enum
+export type NotificationType = 'reminder_24h' | 'reminder_2h' | 'event_update' | 'organizer_message' | 'phone_verification';
+export type NotificationChannel = 'sms' | 'email';
+export type NotificationStatus = 'pending' | 'sending' | 'sent' | 'delivered' | 'failed' | 'undelivered';
+export type MessageType = 'organizer_message' | 'event_update' | 'system_message'; 

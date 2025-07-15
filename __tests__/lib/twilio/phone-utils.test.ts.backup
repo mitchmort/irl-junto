@@ -1,0 +1,153 @@
+import { describe, it, expect } from '@jest/globals';
+import { 
+  validatePhoneNumber, 
+  formatPhoneNumberForDisplay, 
+  normalizePhoneNumber 
+} from '@/lib/twilio/phone-utils';
+
+describe('Phone Utils', () => {
+  describe('validatePhoneNumber', () => {
+    it('should validate US phone numbers', () => {
+      const validNumbers = [
+        '+1234567890',
+        '+1 234 567 8900',
+        '(234) 567-8900',
+        '234-567-8900',
+        '2345678900',
+        '+1 (234) 567-8900',
+      ];
+
+      validNumbers.forEach(number => {
+        const result = validatePhoneNumber(number);
+        expect(result.isValid).toBe(true);
+        expect(result.normalized).toMatch(/^\+1\d{10}$/);
+      });
+    });
+
+    it('should validate international phone numbers', () => {
+      const validNumbers = [
+        '+447911123456', // UK
+        '+33123456789', // France
+        '+49123456789', // Germany
+        '+81123456789', // Japan
+      ];
+
+      validNumbers.forEach(number => {
+        const result = validatePhoneNumber(number);
+        expect(result.isValid).toBe(true);
+        expect(result.normalized).toBe(number);
+      });
+    });
+
+    it('should reject invalid phone numbers', () => {
+      const invalidNumbers = [
+        '123',
+        '123456789',
+        '+1123456789', // Too short
+        '+112345678901', // Too long
+        'abc123456789',
+        '+1234567890123456', // Way too long
+        '',
+        null,
+        undefined,
+      ];
+
+      invalidNumbers.forEach(number => {
+        const result = validatePhoneNumber(number as any);
+        expect(result.isValid).toBe(false);
+        expect(result.error).toBeDefined();
+      });
+    });
+
+    it('should handle edge cases', () => {
+      const edgeCases = [
+        { input: '+1 (555) 123-4567', expected: '+15551234567' },
+        { input: '1-555-123-4567', expected: '+15551234567' },
+        { input: '555.123.4567', expected: '+15551234567' },
+        { input: '555 123 4567', expected: '+15551234567' },
+      ];
+
+      edgeCases.forEach(({ input, expected }) => {
+        const result = validatePhoneNumber(input);
+        expect(result.isValid).toBe(true);
+        expect(result.normalized).toBe(expected);
+      });
+    });
+  });
+
+  describe('formatPhoneNumberForDisplay', () => {
+    it('should format US phone numbers for display', () => {
+      const testCases = [
+        { input: '+15551234567', expected: '(555) 123-4567' },
+        { input: '+12345678900', expected: '(234) 567-8900' },
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = formatPhoneNumberForDisplay(input);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should format international phone numbers', () => {
+      const testCases = [
+        { input: '+447911123456', expected: '+447911123456' },
+        { input: '+33123456789', expected: '+33123456789' },
+        { input: '+49123456789', expected: '+49123456789' },
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = formatPhoneNumberForDisplay(input);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle invalid input gracefully', () => {
+      const result1 = formatPhoneNumberForDisplay('invalid');
+      expect(result1).toBe('+invalid');
+      
+      const result2 = formatPhoneNumberForDisplay('123');
+      expect(result2).toBe('+123');
+    });
+  });
+
+  describe('normalizePhoneNumber', () => {
+    it('should normalize phone numbers to E.164 format', () => {
+      const testCases = [
+        { input: '(555) 123-4567', expected: '+15551234567' },
+        { input: '555.123.4567', expected: '+15551234567' },
+        { input: '555 123 4567', expected: '+15551234567' },
+        { input: '15551234567', expected: '+15551234567' },
+        { input: '+15551234567', expected: '+15551234567' },
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = normalizePhoneNumber(input);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle international numbers', () => {
+      const testCases = [
+        { input: '+447911123456', expected: '+447911123456' },
+        { input: '447911123456', expected: '+447911123456' },
+        { input: '+33123456789', expected: '+33123456789' },
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = normalizePhoneNumber(input);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle edge cases', () => {
+      const result1 = normalizePhoneNumber('invalid');
+      expect(result1).toBe('+invalid');
+      
+      const result2 = normalizePhoneNumber('123');
+      expect(result2).toBe('+123');
+      
+      const result3 = normalizePhoneNumber('');
+      expect(result3).toBe('+');
+    });
+  });
+});
