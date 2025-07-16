@@ -1,6 +1,6 @@
 import { create, StateCreator } from "zustand";
 import { EventInput } from "@fullcalendar/core";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { Event, EventInsert, EventUpdate } from "@/types/database";
 import { handleError } from "@/lib/error-handler";
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { supabase, Event, EventInsert, EventUpdate } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
+import { Event, EventInsert, EventUpdate } from '@/types/database'
 
 export interface EventsFilters {
   userOnly?: boolean

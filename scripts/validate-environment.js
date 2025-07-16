@@ -13,29 +13,14 @@ console.log('🔍 Validating SMS Notification System Environment...\n');
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
 
-// Check if .env.twilio exists and source it
-const twilioEnvPath = path.join(process.cwd(), '.env.twilio');
-if (fs.existsSync(twilioEnvPath)) {
-  const twilioEnv = fs.readFileSync(twilioEnvPath, 'utf8');
-  const lines = twilioEnv.split('\n');
-  
-  lines.forEach(line => {
-    if (line.startsWith('export ')) {
-      const [key, value] = line.replace('export ', '').split('=');
-      if (key && value) {
-        process.env[key] = value.replace(/"/g, '');
-      }
-    }
-  });
-}
+// Environment variables are already loaded from .env.local via dotenv
 
 // Required environment variables
 const requiredVars = {
   'NEXT_PUBLIC_SUPABASE_URL': 'Supabase URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY': 'Supabase Anonymous Key',
   'TWILIO_ACCOUNT_SID': 'Twilio Account SID',
-  'TWILIO_API_KEY': 'Twilio API Key',
-  'TWILIO_API_SECRET': 'Twilio API Secret',
+  'TWILIO_AUTH_TOKEN': 'Twilio Auth Token',
   'TWILIO_PHONE_NUMBER': 'Twilio Phone Number',
   'NEXT_PUBLIC_APP_URL': 'Application URL',
 };

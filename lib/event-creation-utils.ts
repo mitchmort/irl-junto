@@ -1,7 +1,7 @@
 import { EventCreationFormData } from '@/store/event-creation';
 import { EventInsert } from '@/types/database';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 /**
  * Generates an enhanced event title in the format "Day Period Activity Subcategory"

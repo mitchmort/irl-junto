@@ -19,11 +19,13 @@ import {
   Copy,
   Target,
   Package,
-  FileText
+  FileText,
+  CalendarPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/auth-provider";
 import useCalendarEventStore from "@/store/useCalendarEventStore";
+import { CalendarDropdown } from "@/components/event-detail/calendar-dropdown";
 
 interface EventDetailsSheetProps {
   event: EventInput | null;
@@ -351,6 +353,37 @@ export default function EventDetailsSheet({
               <Edit className="h-4 w-4 mr-2" />
               Edit Event
             </Button>
+          )}
+          
+          {event.extendedProps && (
+            <CalendarDropdown
+              event={{
+                id: parseInt(event.id as string),
+                title: event.title || '',
+                sport: extendedProps.sport || '',
+                date: event.start ? new Date(event.start as string).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                time: event.start ? new Date(event.start as string).toTimeString().substr(0, 5) : '00:00',
+                location: extendedProps.location || '',
+                max_participants: maxParticipants,
+                participant_count: participantCount,
+                organizer: extendedProps.organizer,
+                status: extendedProps.status || 'open',
+                created_at: null,
+                description: description,
+                duration: duration,
+                cost: cost,
+                skill_levels: skillLevels,
+                equipment_requirements: equipmentRequirements,
+                arrival_instructions: arrivalInstructions,
+                image: null,
+                notes: null,
+                share_link: null,
+                sub_type: null,
+                url_slug: urlSlug
+              }}
+              participantCount={participantCount}
+              className="w-full"
+            />
           )}
           
           <Button asChild className="w-full" variant={isOrganizer ? "default" : "default"}>

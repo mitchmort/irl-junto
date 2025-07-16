@@ -32,7 +32,7 @@ import { format } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
 import { useAuth } from "@/components/auth/auth-provider";
 import { transformFormDataToSupabase, validateEventFormData, generateShareLink, generateEnhancedEventTitle } from "@/lib/event-creation-utils";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 
 export function EventSummaryStep() {
   const router = useRouter();

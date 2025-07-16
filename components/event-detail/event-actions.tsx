@@ -24,10 +24,13 @@ import {
   LogIn,
   UserCheck,
   UserX,
-  Clock
+  Clock,
+  CalendarPlus
 } from "lucide-react";
 import { EventPermissions } from "@/hooks/use-event-permissions";
 import { useEventParticipants } from "@/hooks/use-event-participants";
+import { CalendarDropdown } from "./calendar-dropdown";
+import { useEvent } from "@/hooks/use-events";
 
 interface EventActionsProps {
   eventId?: number;
@@ -38,6 +41,7 @@ interface EventActionsProps {
 export function EventActions({ eventId, permissions, onPermissionsChange }: EventActionsProps) {
   const router = useRouter();
   const { joinEvent, leaveEvent } = useEventParticipants(eventId);
+  const { event } = useEvent(eventId);
   const [isLoading, setIsLoading] = useState(false);
   
   // Return null if eventId is not available
@@ -220,6 +224,18 @@ export function EventActions({ eventId, permissions, onPermissionsChange }: Even
 
   const getSecondaryButtons = () => {
     const buttons = [];
+
+    // Add to Calendar button (for participants)
+    if (permissions.isParticipant && event) {
+      buttons.push(
+        <CalendarDropdown
+          key="calendar"
+          event={event}
+          participantCount={event.participant_count}
+          className="h-12"
+        />
+      );
+    }
 
     // Share button (always available)
     if (permissions.canShareEvent) {

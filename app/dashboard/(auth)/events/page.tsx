@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState, useMemo } from "react";
-import { generateMeta } from "@/lib/utils";
 import Link from "next/link";
 import { PlusCircle, AlertCircle } from "lucide-react";
 import { useUserEvents } from "@/hooks/use-user-events";

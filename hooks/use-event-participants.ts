@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { supabase, EventParticipant, EventParticipantInsert, EventParticipantUpdate, EventParticipantWithProfile } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
+import { EventParticipant, EventParticipantInsert, EventParticipantUpdate, EventParticipantWithProfile } from '@/types/database'
 
 export const useEventParticipants = (eventId?: number) => {
   const [participants, setParticipants] = useState<EventParticipantWithProfile[]>([])

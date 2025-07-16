@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { supabase, Profile, ProfileInsert, ProfileUpdate } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
+import { Profile, ProfileInsert, ProfileUpdate } from '@/types/database'
 
 export const useProfile = (userId?: string) => {
   const [profile, setProfile] = useState<Profile | null>(null)

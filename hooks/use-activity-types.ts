@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { supabase, ActivityType } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
+import { ActivityType } from '@/types/database'
 
 export const useActivityTypes = () => {
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])

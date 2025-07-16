@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { supabase, Event } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
+import { Event } from '@/types/database'
 
 export interface UserEvent extends Event {
   user_role: 'organizer' | 'participant' | null

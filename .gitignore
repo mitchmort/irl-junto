@@ -26,6 +26,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env*.local
 
 # vercel
@@ -33,10 +38,14 @@ yarn-error.log*
 
 # editor
 .idea
+.vscode
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-.env.twilio
+# security - never commit credentials
+*.pem
+*.key
+.env.production
+.env.development

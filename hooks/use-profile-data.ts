@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { Profile } from "@/types/database";
 import { UserActivity } from "./use-user-activity";
 import { UserEvent } from "./use-user-events";
