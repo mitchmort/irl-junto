@@ -235,14 +235,16 @@ export async function generateUniqueEventSlug(length: number = 12): Promise<stri
       .from('events')
       .select('id')
       .eq('url_slug', slug)
-      .single();
+      .maybeSingle();
     
-    if (error && error.code === 'PGRST116') {
+    if (error) {
+      // Database error
+      throw error;
+    }
+    
+    if (!data) {
       // No row found, slug is unique
       return slug;
-    } else if (error) {
-      // Other database error
-      throw error;
     }
     
     attempts++;

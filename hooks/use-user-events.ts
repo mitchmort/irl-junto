@@ -39,7 +39,7 @@ const fetchUserEvents = async (filters: UserEventFilters = { type: 'all' }): Pro
     .from('events')
     .select(`
       *,
-      event_participants!left(
+      event_participants(
         user_id,
         status,
         role
@@ -90,22 +90,21 @@ const fetchUserEvents = async (filters: UserEventFilters = { type: 'all' }): Pro
     case 'organized':
       query = query.eq('organizer', user.id)
       break
-    case 'joined':
-      // For joined events, we need events where user is a participant
-      query = query.eq('event_participants.user_id', user.id)
-      break
-    case 'available':
-      // For available events, exclude user's own events and current participations
-      query = query
-        .neq('organizer', user.id)
-        .gte('date', new Date().toISOString().split('T')[0])
-      break
-    // For 'all', we don't apply specific filters at database level
+    // For other types, we'll filter client-side to avoid complex joins
+    // This ensures the query works reliably
   }
 
   const { data, error: fetchError, count } = await query
 
-  if (fetchError) throw fetchError
+  if (fetchError) {
+    console.error('useUserEvents fetch error:', fetchError)
+    throw new Error(`Failed to fetch events: ${fetchError.message}`)
+  }
+
+  if (!data) {
+    console.log('No data returned from query')
+    return { events: [], totalCount: 0 }
+  }
 
   // Transform events with user role information
   const allUserEvents: UserEvent[] = (data || []).map(event => {
@@ -179,6 +178,7 @@ export const useUserEvents = (filters: UserEventFilters = { type: 'all' }) => {
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
+      console.error('useUserEvents retry:', failureCount, error)
       if (error instanceof Error && error.message.includes('4')) {
         return false
       }
