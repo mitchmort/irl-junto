@@ -15,17 +15,29 @@ export type { DeliveryStatus } from './delivery-tracker';
 export class NotificationManager {
   private static instance: NotificationManager;
 
-  private constructor(
-    private notificationService = notificationService,
-    private scheduler = notificationScheduler,
-    private deliveryTracker = deliveryTracker
-  ) {}
+  private constructor() {}
 
   public static getInstance(): NotificationManager {
     if (!NotificationManager.instance) {
       NotificationManager.instance = new NotificationManager();
     }
     return NotificationManager.instance;
+  }
+
+  // Lazy getters to avoid circular dependencies
+  private get notificationService() {
+    const { notificationService } = require('./notification-service');
+    return notificationService;
+  }
+
+  private get scheduler() {
+    const { notificationScheduler } = require('./scheduler');
+    return notificationScheduler;
+  }
+
+  private get deliveryTracker() {
+    const { deliveryTracker } = require('./delivery-tracker');
+    return deliveryTracker;
   }
 
   // Convenience methods
