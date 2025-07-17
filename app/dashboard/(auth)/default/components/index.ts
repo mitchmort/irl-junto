@@ -1,4 +1,3 @@
-export * from "./chat-widget";
 export * from "./payment-method";
 export * from "./theme-members";
 export * from "./exercise-minutes";

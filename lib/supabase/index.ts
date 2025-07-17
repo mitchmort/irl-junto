@@ -1,5 +1,7 @@
 // Client-side Supabase client
-export { supabase, createClient as createBrowserClient } from './client'
+export { createClient as supabase } from './client'
+export * from './server'
+export * from './storage'
 
 // Utility functions
 export {

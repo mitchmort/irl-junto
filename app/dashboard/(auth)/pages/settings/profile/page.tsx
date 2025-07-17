@@ -77,8 +77,20 @@ const defaultValues: Partial<ProfileFormValues> = {
   socialLinks: [{ value: "" }]
 };
 
+// Helper function to check if a URL is a blob URL
+function isBlobUrl(url: string): boolean {
+  return url.startsWith('blob:');
+}
+
+// Helper function to check if a URL is valid (not blob and not empty)
+function isValidImageUrl(url: string | null | undefined): boolean {
+  return !!(url && !isBlobUrl(url) && url.trim() !== '');
+}
+
 export default function Page() {
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>("");
+  // Separate states for preview and actual avatar file
+  const [newImagePreview, setNewImagePreview] = useState<string>("");  // Only for new uploads
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
   const [sportsDropdownOpen, setSportsDropdownOpen] = useState(false);
   const { user } = useAuth();
   const { profile, updateProfile, fetchProfile, saving, error, clearError } = useProfileStore();
@@ -94,16 +106,20 @@ export default function Page() {
     control: form.control
   });
 
-  // Memoize the onFilesChange callback to prevent unnecessary re-renders
+  // Handle file selection for avatar upload
   const handleFilesChange = useCallback((files: any[]) => {
-    if (files.length > 0 && files[0].preview) {
-      setProfilePhotoPreview(files[0].preview);
-      form.setValue("photo", files[0].preview);
+    if (files.length > 0 && files[0].preview && files[0].file) {
+      console.log("📷 New avatar file selected:", files[0].file.name);
+      // Store the blob URL for preview only (never save this to database)
+      setNewImagePreview(files[0].preview);
+      // Store the actual File object for upload
+      setSelectedAvatarFile(files[0].file);
     } else {
-      setProfilePhotoPreview("");
-      form.setValue("photo", "");
+      console.log("🗑️ Avatar selection cleared");
+      setNewImagePreview("");
+      setSelectedAvatarFile(null);
     }
-  }, [form]);
+  }, []);
 
   const [fileState, fileActions] = useFileUpload({
     maxFiles: 1,
@@ -127,17 +143,22 @@ export default function Page() {
         ? profile.social_links.map((link: any) => ({ value: link.value || link }))
         : [{ value: "" }];
 
+      // Clean the avatar URL - if it's a blob URL, ignore it
+      const cleanAvatarUrl = isValidImageUrl(profile.avatar_url) ? (profile.avatar_url || "") : "";
+      
       form.reset({
         name: profile.full_name || "",
         bio: profile.bio || "Passionate athlete looking to connect with other players for exciting games and events.",
-        photo: profile.avatar_url || "",
+        photo: cleanAvatarUrl,
         sports: profile.sports || [],
         socialLinks: socialLinksArray.length > 0 ? socialLinksArray : [{ value: "" }]
       });
 
-      if (profile.avatar_url) {
-        setProfilePhotoPreview(profile.avatar_url);
-      }
+      console.log("📝 Profile form reset with data:", {
+        name: profile.full_name,
+        avatarUrl: cleanAvatarUrl,
+        bio: profile.bio?.substring(0, 50) + '...'
+      });
     }
   }, [profile, form]);
 
@@ -154,13 +175,31 @@ export default function Page() {
       return;
     }
 
-    console.log("🔍 Profile form submission:", { userId: user.id, formData: data });
+    console.log("🚀 Starting profile update...", { 
+      userId: user.id, 
+      hasNewAvatar: !!selectedAvatarFile,
+      formDataPhoto: data.photo?.substring(0, 50) + '...'
+    });
 
     try {
-      await updateProfile(user.id, data);
-      console.log("✅ Profile update successful");
+      // Prepare submission data - never include blob URLs
+      const submissionData = {
+        name: data.name,
+        bio: data.bio,
+        photo: selectedAvatarFile ? undefined : (data.photo || undefined), // Clear if uploading new file
+        sports: data.sports,
+        socialLinks: data.socialLinks
+      };
+
+      await updateProfile(user.id, submissionData, selectedAvatarFile || undefined);
       
-      // Mark form as not dirty after successful save
+      console.log("✅ Profile updated successfully");
+      
+      // Clear the file selection and preview
+      setSelectedAvatarFile(null);
+      setNewImagePreview("");
+      
+      // Reset form to current state (this will update with new avatar URL from database)
       form.reset(form.getValues());
       
       toast.success("Profile updated successfully!", {
@@ -182,7 +221,25 @@ export default function Page() {
       .slice(0, 2);
   };
 
-  const hasPhoto = profilePhotoPreview || form.watch("photo");
+  // Determine what to show in avatar - priority: new preview > existing valid URL > fallback
+  const getAvatarSrc = () => {
+    // If user selected a new file, show the preview
+    if (newImagePreview) {
+      return newImagePreview;
+    }
+    
+    // Otherwise, show the saved avatar if it's valid (not a blob URL)
+    const savedAvatar = form.watch("photo");
+    if (isValidImageUrl(savedAvatar)) {
+      return savedAvatar;
+    }
+    
+    // No valid image to show
+    return "";
+  };
+
+  const avatarSrc = getAvatarSrc();
+  const hasPhoto = !!avatarSrc;
 
   return (
     <Card>
@@ -198,11 +255,16 @@ export default function Page() {
                   <FormItem className="flex flex-col items-center">
                     <div className="relative">
                       <Avatar className="h-24 w-24">
-                        <AvatarImage src={profilePhotoPreview || field.value} />
+                        <AvatarImage src={avatarSrc} />
                         <AvatarFallback className="text-lg">
                           {form.watch("name") ? getNameInitials(form.watch("name") || "") : <CameraIcon className="h-8 w-8" />}
                         </AvatarFallback>
                       </Avatar>
+                      {selectedAvatarFile && (
+                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                          New
+                        </div>
+                      )}
                     </div>
                     <FormControl>
                       <div>
@@ -238,10 +300,10 @@ export default function Page() {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your display name" {...field} />
+                    <Input placeholder="Your full name" {...field} />
                   </FormControl>
                   <FormDescription>
-                    This is how other players will see you. It can be your real name or a nickname.
+                    This is your public display name. It can be your real name or a pseudonym.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -257,161 +319,152 @@ export default function Page() {
                   <FormLabel>Bio</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Tell us a little bit about yourself as a player"
+                      placeholder="Tell others about yourself"
                       className="resize-none"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Share your sports experience, preferred playing style, or what you&apos;re looking for in events.
+                    You can @mention other users and organizations to link to them.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Sports Selection */}
+            {/* Sports Field */}
             <FormField
               control={form.control}
               name="sports"
-              render={({ field }) => {
-                const selectedSports = field.value || [];
-                const selectedSportsLabels = selectedSports.map(
-                  (sportId) => SPORTS_OPTIONS.find((sport) => sport.id === sportId)?.label
-                ).filter(Boolean);
-
-                return (
-                  <FormItem>
-                    <FormLabel className="text-base">Sports You Play</FormLabel>
-                    <FormDescription>
-                      Select all the sports you&apos;re interested in playing or would like to join events for.
-                    </FormDescription>
-                    <FormControl>
-                      <Popover open={sportsDropdownOpen} onOpenChange={setSportsDropdownOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={sportsDropdownOpen}
-                            className="w-full justify-between min-h-10 h-auto"
-                          >
-                            <div className="flex flex-wrap gap-1">
-                              {selectedSportsLabels.length > 0 ? (
-                                selectedSportsLabels.map((sport) => (
-                                  <Badge
-                                    key={sport}
-                                    variant="secondary"
-                                    className="text-xs"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const sportId = SPORTS_OPTIONS.find(s => s.label === sport)?.id;
-                                      if (sportId) {
-                                        field.onChange(
-                                          selectedSports.filter((id) => id !== sportId)
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    {sport}
-                                    <XIcon className="ml-1 h-3 w-3 cursor-pointer" />
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-muted-foreground">Select sports...</span>
-                              )}
-                            </div>
-                            <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search sports..." className="h-9" />
-                            <CommandList>
-                              <CommandEmpty>No sports found.</CommandEmpty>
-                              <CommandGroup>
-                                {SPORTS_OPTIONS.map((sport) => (
-                                  <CommandItem
-                                    key={sport.id}
-                                    value={sport.label}
-                                    onSelect={() => {
-                                      const isSelected = selectedSports.includes(sport.id);
-                                      if (isSelected) {
-                                        field.onChange(
-                                          selectedSports.filter((id) => id !== sport.id)
-                                        );
-                                      } else {
-                                        field.onChange([...selectedSports, sport.id]);
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex items-center space-x-2">
-                                      <Checkbox
-                                        checked={selectedSports.includes(sport.id)}
-                                      />
-                                      <span>{sport.label}</span>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sports & Activities</FormLabel>
+                  <Popover open={sportsDropdownOpen} onOpenChange={setSportsDropdownOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value && field.value.length > 0
+                            ? `${field.value.length} sport${field.value.length > 1 ? 's' : ''} selected`
+                            : "Select sports you play"}
+                          <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search sports..." />
+                        <CommandEmpty>No sport found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandList>
+                            {SPORTS_OPTIONS.map((sport) => (
+                                                            <CommandItem
+                                value={sport.label}
+                                key={sport.id}
+                                onSelect={() => {
+                                  const currentValue = field.value || [];
+                                  const newValue = currentValue.includes(sport.id)
+                                    ? currentValue.filter((value) => value !== sport.id)
+                                    : [...currentValue, sport.id];
+                                  field.onChange(newValue);
+                                }}
+                              >
+                                <Checkbox
+                                  checked={field.value?.includes(sport.id) || false}
+                                  className="mr-2"
+                                />
+                                {sport.label}
+                              </CommandItem>
+                            ))}
+                          </CommandList>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {field.value && field.value.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {field.value.map((sportId) => {
+                        const sport = SPORTS_OPTIONS.find(s => s.id === sportId);
+                        return sport ? (
+                          <Badge key={sportId} variant="secondary" className="flex items-center gap-1">
+                            {sport.label}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newValue = field.value?.filter((value) => value !== sportId) || [];
+                                field.onChange(newValue);
+                              }}
+                              className="ml-1 hover:bg-red-100 rounded-full p-0.5"
+                            >
+                              <XIcon className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                  <FormDescription>
+                    Select the sports and activities you enjoy playing.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
             {/* Social Links */}
-            <div className="space-y-4">
-              <div>
-                <FormLabel className="text-base">Social Links</FormLabel>
+            <div>
+              <div className="space-y-2">
+                <FormLabel>Social Links</FormLabel>
                 <FormDescription>
-                  Add links to your sports-related social media and fitness profiles.
+                  Add links to your social media profiles.
                 </FormDescription>
               </div>
-              <div className="space-y-2">
-                {fields.map((field, index) => (
-                  <FormField
-                    control={form.control}
-                    key={field.id}
-                    name={`socialLinks.${index}.value`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex space-x-2">
-                          <FormControl>
-                            <Input 
-                              placeholder="https://instagram.com/yourprofile" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => remove(index)}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ value: "" })}
-                >
-                  Add Another Link
-                </Button>
-              </div>
+              {fields.map((field, index) => (
+                <FormField
+                  control={form.control}
+                  key={field.id}
+                  name={`socialLinks.${index}.value`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={cn(index !== 0 && "sr-only")}>
+                        Social Links
+                      </FormLabel>
+                      <FormDescription className={cn(index !== 0 && "sr-only")}>
+                        Add links to your website, blog, or social media profiles.
+                      </FormDescription>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input {...field} placeholder="https://example.com" />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => remove(index)}
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => append({ value: "" })}
+              >
+                Add Social Link
+              </Button>
             </div>
 
             <Button type="submit" className="w-full" disabled={saving}>

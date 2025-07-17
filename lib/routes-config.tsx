@@ -71,17 +71,6 @@ export const page_routes: PageRoutesType[] = [
     ]
   },
   {
-    title: "Messages",
-    items: [
-      {
-        title: "Messages",
-        href: "/dashboard/apps/chat",
-        icon: "MessageSquare",
-        isDataBadge: "4"
-      }
-    ]
-  },
-  {
     title: "Account",
     items: [
       {

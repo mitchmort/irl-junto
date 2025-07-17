@@ -1,34 +1,34 @@
-import { create } from 'zustand';
-import { supabase } from '@/lib/supabase/client';
-import { Profile, ProfileUpdate } from '@/types/database';
+import { create } from 'zustand'
+import { supabase } from '@/lib/supabase/client'
+import { uploadProfileAvatar, isValidImageFile } from '@/lib/supabase/storage'
+import { Profile, ProfileUpdate } from '@/types/database'
+import { useQueryClient } from '@tanstack/react-query'
 
-// Type for social links array from the form
-type SocialLink = {
-  value: string;
-};
-
-// Extended profile type for form data
-interface ProfileFormData {
-  name: string;
-  bio: string;
-  photo?: string;
-  sports?: string[];
-  socialLinks?: SocialLink[];
+export interface ProfileFormData {
+  name: string
+  bio: string
+  photo?: string
+  sports?: string[]
+  socialLinks?: { value: string }[]
 }
 
 interface ProfileStore {
-  // State
-  profile: Profile | null;
-  loading: boolean;
-  error: string | null;
-  saving: boolean;
-
-  // Actions
-  setProfile: (profile: Profile | null) => void;
-  fetchProfile: (userId: string) => Promise<void>;
-  updateProfile: (userId: string, profileData: ProfileFormData) => Promise<void>;
-  clearError: () => void;
+  profile: Profile | null
+  loading: boolean
+  error: string | null
+  saving: boolean
+  setProfile: (profile: Profile | null) => void
+  fetchProfile: (userId: string) => Promise<void>
+  updateProfile: (userId: string, profileData: ProfileFormData, avatarFile?: File) => Promise<void>
+  clearError: () => void
 }
+
+// Global query client reference for cache invalidation
+let globalQueryClient: any = null;
+
+export const setQueryClient = (queryClient: any) => {
+  globalQueryClient = queryClient;
+};
 
 export const useProfileStore = create<ProfileStore>((set, get) => ({
   // Initial state
@@ -71,17 +71,37 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   },
 
   // Update profile in database
-  updateProfile: async (userId: string, profileData: ProfileFormData) => {
+  updateProfile: async (userId: string, profileData: ProfileFormData, avatarFile?: File) => {
     console.log('💾 Updating profile for user:', userId);
     console.log('📋 Form data received:', profileData);
+    console.log('📎 Avatar file:', avatarFile);
     set({ saving: true, error: null });
 
     try {
+      let avatarUrl = profileData.photo || null;
+
+      // Handle avatar file upload if provided
+      if (avatarFile && isValidImageFile(avatarFile)) {
+        console.log('📤 Uploading avatar file to Supabase Storage...');
+        
+        const { data: uploadData, error: uploadError } = await uploadProfileAvatar(userId, avatarFile);
+        
+        if (uploadError) {
+          console.error('❌ Avatar upload failed:', uploadError);
+          throw new Error(`Failed to upload avatar: ${uploadError.message}`);
+        }
+        
+        if (uploadData?.publicUrl) {
+          avatarUrl = uploadData.publicUrl;
+          console.log('✅ Avatar uploaded successfully:', avatarUrl);
+        }
+      }
+
       // Transform form data to database format
       const updateData: ProfileUpdate = {
         full_name: profileData.name,
         bio: profileData.bio,
-        avatar_url: profileData.photo || null,
+        avatar_url: avatarUrl,
         sports: profileData.sports && profileData.sports.length > 0 ? profileData.sports : null,
         social_links: profileData.socialLinks
           ? profileData.socialLinks
@@ -109,6 +129,18 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       
       // Update local state with the returned data
       set({ profile: data, saving: false });
+      
+      // Invalidate React Query caches to refresh all profile data
+      if (globalQueryClient) {
+        console.log('🔄 Invalidating React Query cache for profile data...');
+        await globalQueryClient.invalidateQueries({ 
+          queryKey: ['profile-data', userId] 
+        });
+        await globalQueryClient.invalidateQueries({ 
+          queryKey: ['profile', userId] 
+        });
+        console.log('✅ Cache invalidated successfully');
+      }
       
       return Promise.resolve();
     } catch (error) {
