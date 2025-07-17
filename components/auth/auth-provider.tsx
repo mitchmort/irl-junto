@@ -3,25 +3,33 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { type User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
-import { Profile } from '@/types/database'
+import { type Tables } from '@/lib/supabase/utils'
+
+type Profile = Tables<'profiles'>
+type CustomUser = Tables<'users'>
 
 interface AuthContextType {
   user: User | null
   profile: Profile | null
+  customUser: CustomUser | null
   loading: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
+  refreshCustomUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const useAuth = () => {
+export const useAuthContext = () => {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuthContext must be used within an AuthProvider')
   }
   return context
 }
+
+// Legacy export for backward compatibility
+export const useAuth = useAuthContext
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -30,6 +38,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [customUser, setCustomUser] = useState<CustomUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = async (userId: string) => {
@@ -40,7 +49,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching profile:', error)
+        setProfile(null)
+        return
+      }
       setProfile(data)
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -48,9 +61,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const fetchCustomUser = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.error('Error fetching custom user:', error)
+        setCustomUser(null)
+        return
+      }
+      setCustomUser(data)
+    } catch (error) {
+      console.error('Error fetching custom user:', error)
+      setCustomUser(null)
+    }
+  }
+
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id)
+    }
+  }
+
+  const refreshCustomUser = async () => {
+    if (user) {
+      await fetchCustomUser(user.id)
     }
   }
 
@@ -65,7 +104,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
       if (session?.user) {
-        await fetchProfile(session.user.id)
+        await Promise.all([
+          fetchProfile(session.user.id),
+          fetchCustomUser(session.user.id)
+        ])
       }
       setLoading(false)
     }
@@ -78,9 +120,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          await fetchProfile(session.user.id)
+          await Promise.all([
+            fetchProfile(session.user.id),
+            fetchCustomUser(session.user.id)
+          ])
         } else {
           setProfile(null)
+          setCustomUser(null)
         }
         
         setLoading(false)
@@ -93,9 +139,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     user,
     profile,
+    customUser,
     loading,
     signOut,
     refreshProfile,
+    refreshCustomUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

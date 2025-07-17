@@ -117,7 +117,7 @@ export function RegistrationWithPhone() {
             <h3 className="text-lg font-semibold">Welcome to Junto!</h3>
             <p className="text-sm text-muted-foreground">
               Your account has been created and your phone number is verified. 
-              You're all set to start organizing and joining events!
+              You&apos;re all set to start organizing and joining events!
             </p>
           </div>
         </CardContent>
@@ -131,7 +131,7 @@ export function RegistrationWithPhone() {
         <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold">Almost Done!</h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Let's verify your phone number to enable SMS notifications
+            Let&apos;s verify your phone number to enable SMS notifications
           </p>
         </div>
         <PhoneVerification

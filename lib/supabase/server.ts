@@ -34,4 +34,7 @@ export const createClient = async () => {
       },
     }
   )
-} 
+}
+
+// Legacy export for backward compatibility
+export const supabase = createClient() 

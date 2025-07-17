@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { NotificationPreferencesUpdate } from '@/types/database';
 
 // Request schemas
@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { userId: validUserId } = getPreferencesSchema.parse({ userId });
+    
+    const supabase = await createClient();
 
     // Get user preferences
     const { data: preferences, error } = await supabase
@@ -99,6 +101,8 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { userId, ...updateData } = updatePreferencesSchema.parse(body);
+    
+    const supabase = await createClient();
 
     // Check if user exists
     const { data: user, error: userError } = await supabase

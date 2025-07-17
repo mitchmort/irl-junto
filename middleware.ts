@@ -75,13 +75,13 @@ export async function middleware(request: NextRequest) {
     if (user) {
       return NextResponse.redirect(new URL('/dashboard/default', request.url))
     } else {
-      return NextResponse.redirect(new URL('/dashboard/login/v1', request.url))
+      return NextResponse.redirect(new URL('/dashboard/login/sms', request.url))
     }
   }
 
   // Redirect unauthenticated users to login
   if (isProtectedPath && !user) {
-    return NextResponse.redirect(new URL('/dashboard/login/v1', request.url))
+    return NextResponse.redirect(new URL('/dashboard/login/sms', request.url))
   }
 
   // Redirect authenticated users away from auth pages

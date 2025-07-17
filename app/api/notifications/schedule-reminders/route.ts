@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { notificationManager } from '@/lib/notifications';
 
 // Request schema
@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { eventId, organizerId } = scheduleRemindersSchema.parse(body);
+    
+    const supabase = await createClient();
 
     // Check if organizer exists
     const { data: organizer, error: organizerError } = await supabase
@@ -99,6 +101,8 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { eventId, newDateTime, organizerId } = rescheduleRemindersSchema.parse(body);
+    
+    const supabase = await createClient();
 
     // Check if organizer exists
     const { data: organizer, error: organizerError } = await supabase
@@ -148,7 +152,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Reschedule reminders
-    await notificationManager.scheduler.rescheduleEventNotifications(eventId, newEventDateTime);
+    await notificationManager.rescheduleEventNotifications(eventId, newEventDateTime);
 
     return NextResponse.json({
       message: 'Reminders rescheduled successfully',
@@ -186,6 +190,8 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
+    
+    const supabase = await createClient();
 
     // Check if organizer exists
     const { data: organizer, error: organizerError } = await supabase
@@ -224,7 +230,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Cancel reminders
-    await notificationManager.scheduler.cancelEventNotifications(eventId);
+    await notificationManager.cancelEventNotifications(eventId);
 
     return NextResponse.json({
       message: 'Reminders cancelled successfully',

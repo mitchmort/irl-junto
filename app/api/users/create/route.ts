@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { validatePhoneNumber } from '@/lib/twilio/phone-utils';
 
 // Request schema
@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { id, email, name, phone_number } = createUserSchema.parse(body);
+    
+    const supabase = await createClient();
 
     // Validate phone number
     const phoneValidation = validatePhoneNumber(phone_number);

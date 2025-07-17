@@ -24,7 +24,7 @@ export async function GET(
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select('*')
-      .eq('id', id)
+      .eq('id', parseInt(id))
       .single();
     
     if (eventError || !event) {
@@ -38,7 +38,7 @@ export async function GET(
     const { data: participant, error: participantError } = await supabase
       .from('event_participants')
       .select('id')
-      .eq('event_id', id)
+      .eq('event_id', parseInt(id))
       .eq('user_id', user.id)
       .eq('status', 'confirmed')
       .maybeSingle();

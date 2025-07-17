@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { notificationManager } from '@/lib/notifications';
 
 // Request schema
@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { eventId, senderId, message } = eventMessageSchema.parse(body);
+    
+    const supabase = await createClient();
 
     // Check if sender exists
     const { data: sender, error: senderError } = await supabase
@@ -76,8 +78,8 @@ export async function POST(request: NextRequest) {
     // Calculate summary
     const summary = {
       total: results.length,
-      successful: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
+      successful: results.filter((r: any) => r.success).length,
+      failed: results.filter((r: any) => !r.success).length,
     };
 
     return NextResponse.json({
@@ -116,6 +118,8 @@ export async function GET(request: NextRequest) {
       limit,
       offset,
     });
+    
+    const supabase = await createClient();
 
     // Check if event exists
     const { data: event, error: eventError } = await supabase

@@ -150,7 +150,7 @@ export function PhoneVerification({ userId, onVerificationComplete, onCancel }: 
           </div>
           <CardTitle>Verify Your Phone Number</CardTitle>
           <CardDescription>
-            We'll send you a verification code to confirm your phone number
+            We&apos;ll send you a verification code to confirm your phone number
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -248,7 +248,7 @@ export function PhoneVerification({ userId, onVerificationComplete, onCancel }: 
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">
-              Didn't receive the code?
+              Didn&apos;t receive the code?
             </p>
             <Button
               type="button"

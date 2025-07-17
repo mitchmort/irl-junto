@@ -2,21 +2,23 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/auth/auth-provider'
+import { useAuthContext } from '@/components/auth/auth-provider'
 import { Spinner } from '@/components/ui/spinner'
 
 interface AuthGuardProps {
   children: React.ReactNode
   requireAuth?: boolean
+  requirePhoneVerification?: boolean
   redirectTo?: string
 }
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ 
   children, 
   requireAuth = true, 
-  redirectTo = '/dashboard/login/v1' 
+  requirePhoneVerification = false,
+  redirectTo = '/dashboard/login/sms' 
 }) => {
-  const { user, loading } = useAuth()
+  const { user, customUser, loading } = useAuthContext()
   const router = useRouter()
 
   // Show loading spinner while checking authentication
@@ -37,6 +39,12 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     return null
   }
 
+  // If phone verification is required but user's phone is not verified
+  if (requirePhoneVerification && (!customUser || !customUser.phone_verified)) {
+    router.push('/dashboard/login/sms')
+    return null
+  }
+
   // If authentication is not required but user is authenticated (like auth pages)
   if (!requireAuth && user) {
     router.push('/dashboard/default')
@@ -50,7 +58,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 // HOC version for easier usage
 export const withAuthGuard = <P extends object>(
   Component: React.ComponentType<P>,
-  options?: { requireAuth?: boolean; redirectTo?: string }
+  options?: { requireAuth?: boolean; requirePhoneVerification?: boolean; redirectTo?: string }
 ) => {
   const WrappedComponent = (props: P) => (
     <AuthGuard {...options}>

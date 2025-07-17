@@ -1,6 +1,7 @@
 // Notification service exports
 export { NotificationService, notificationService } from './notification-service';
 export type { NotificationRequest, NotificationResult } from './notification-service';
+import { NotificationType } from '@/types/database';
 
 export { TemplateService } from './template-service';
 export type { TemplateData } from './template-service';
@@ -57,8 +58,24 @@ export class NotificationManager {
     return this.notificationService.sendOrganizerMessage(eventId, senderId, message);
   }
 
+  async sendNotification(request: NotificationRequest) {
+    return this.notificationService.sendNotification(request);
+  }
+
+  async sendBatchNotifications(requests: NotificationRequest[]) {
+    return this.notificationService.sendBatchNotifications(requests);
+  }
+
   async scheduleEventReminders(eventId: number) {
     return this.scheduler.scheduleEventReminders(eventId);
+  }
+
+  async rescheduleEventNotifications(eventId: number, newDateTime: Date) {
+    return this.scheduler.rescheduleEventNotifications(eventId, newDateTime);
+  }
+
+  async cancelEventNotifications(eventId: number, type?: NotificationType) {
+    return this.scheduler.cancelEventNotifications(eventId, type);
   }
 
   async processScheduledNotifications() {

@@ -6,9 +6,6 @@ export {
   normalizePhoneNumber,
   formatPhoneNumberForDisplay,
   validatePhoneNumber,
-  generateVerificationCode,
-  isVerificationCodeExpired,
-  getVerificationCodeExpiration,
   maskPhoneNumber,
   phoneNumberSchema,
 } from './phone-utils';

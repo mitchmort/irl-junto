@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parsePhoneNumber, isValidPhoneNumber, formatInternational, CountryCode } from 'libphonenumber-js';
 
 // Phone number validation schema
 export const phoneNumberSchema = z
@@ -31,29 +32,41 @@ export function normalizePhoneNumber(phoneNumber: string): string {
   return `+${digitsOnly}`;
 }
 
-// Format phone number for display
+// Format phone number for display using libphonenumber-js
 export function formatPhoneNumberForDisplay(phoneNumber: string): string {
-  const normalized = normalizePhoneNumber(phoneNumber);
-  
-  // Format US numbers as (XXX) XXX-XXXX
-  if (normalized.startsWith('+1') && normalized.length === 12) {
-    const digits = normalized.substring(2);
-    return `(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}`;
+  try {
+    const parsed = parsePhoneNumber(phoneNumber);
+    // Use national format for better readability
+    return parsed.formatNational();
+  } catch (error) {
+    // Fallback to normalized format
+    return normalizePhoneNumber(phoneNumber);
   }
-  
-  // For international numbers, return as is
-  return normalized;
 }
 
-// Validate phone number
+// Validate phone number using libphonenumber-js
 export function validatePhoneNumber(phoneNumber: string): {
   isValid: boolean;
   normalized?: string;
   error?: string;
 } {
   try {
+    // First check basic format with zod
     phoneNumberSchema.parse(phoneNumber);
-    const normalized = normalizePhoneNumber(phoneNumber);
+    
+    // Then validate with libphonenumber-js
+    const isValid = isValidPhoneNumber(phoneNumber);
+    
+    if (!isValid) {
+      return {
+        isValid: false,
+        error: 'Invalid phone number format',
+      };
+    }
+    
+    const parsed = parsePhoneNumber(phoneNumber);
+    const normalized = parsed.format('E.164');
+    
     return {
       isValid: true,
       normalized,
@@ -72,35 +85,29 @@ export function validatePhoneNumber(phoneNumber: string): {
   }
 }
 
-// Generate verification code
-export function generateVerificationCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Check if verification code is expired
-export function isVerificationCodeExpired(expiresAt: Date): boolean {
-  return new Date() > expiresAt;
-}
-
-// Get verification code expiration time (10 minutes from now)
-export function getVerificationCodeExpiration(): Date {
-  const now = new Date();
-  return new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
-}
+// Note: Verification code generation and expiration are now handled by Supabase Auth
+// with Twilio Verify integration. These functions are no longer needed.
 
 // Mask phone number for display (e.g., (***) ***-1234)
 export function maskPhoneNumber(phoneNumber: string): string {
-  const formatted = formatPhoneNumberForDisplay(phoneNumber);
-  
-  if (formatted.startsWith('(') && formatted.length === 14) {
-    // US format: (XXX) XXX-XXXX -> (***) ***-XXXX
-    return `(***) ***-${formatted.substring(10)}`;
+  try {
+    const parsed = parsePhoneNumber(phoneNumber);
+    const formatted = parsed.formatNational();
+    
+    // For all numbers, mask all but last 4 digits
+    if (formatted.length > 4) {
+      const lastFour = formatted.slice(-4);
+      const maskedPart = formatted.slice(0, -4).replace(/\d/g, '*');
+      return maskedPart + lastFour;
+    }
+    
+    return formatted;
+  } catch (error) {
+    // Fallback to simple masking
+    const formatted = formatPhoneNumberForDisplay(phoneNumber);
+    if (formatted.length > 4) {
+      return `${'*'.repeat(formatted.length - 4)}${formatted.substring(formatted.length - 4)}`;
+    }
+    return formatted;
   }
-  
-  // For international numbers, mask all but last 4 digits
-  if (formatted.length > 4) {
-    return `${'*'.repeat(formatted.length - 4)}${formatted.substring(formatted.length - 4)}`;
-  }
-  
-  return formatted;
 }

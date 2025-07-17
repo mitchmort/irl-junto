@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { notificationManager } from '@/lib/notifications';
 import { NotificationType } from '@/types/database';
 
@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { userId, eventId, type, templateData, scheduledFor } = sendSMSSchema.parse(body);
+    
+    const supabase = await createClient();
 
     // Check if user exists
     const { data: user, error: userError } = await supabase
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send notification
-    const result = await notificationManager.notificationService.sendNotification({
+    const result = await notificationManager.sendNotification({
       userId,
       eventId,
       type: type as NotificationType,
@@ -126,13 +128,13 @@ export async function PUT(request: NextRequest) {
     }));
 
     // Send batch
-    const results = await notificationManager.notificationService.sendBatchNotifications(notificationRequests);
+    const results = await notificationManager.sendBatchNotifications(notificationRequests);
 
     // Calculate summary
     const summary = {
       total: results.length,
-      successful: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
+      successful: results.filter((r: any) => r.success).length,
+      failed: results.filter((r: any) => !r.success).length,
     };
 
     return NextResponse.json({

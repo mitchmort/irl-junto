@@ -66,7 +66,7 @@ const defaultValues: Partial<NotificationsFormValues> = {
 };
 
 export default function Page() {
-  const { user } = useAuth();
+  const { user, customUser } = useAuth();
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [userPhone, setUserPhone] = useState<string | null>(null);
@@ -101,13 +101,11 @@ export default function Page() {
 
   // Check user phone verification status
   useEffect(() => {
-    if (user) {
-      // This would typically come from the user object
-      // For now, we'll assume it's available in the auth context
-      setPhoneVerified(user.phone_verified || false);
-      setUserPhone(user.phone_number || null);
+    if (customUser) {
+      setPhoneVerified(customUser.phone_verified || false);
+      setUserPhone(customUser.phone_number || null);
     }
-  }, [user]);
+  }, [customUser]);
 
   function onSubmit(data: NotificationsFormValues) {
     if (!user) return;

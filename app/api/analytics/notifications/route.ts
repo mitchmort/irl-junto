@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { deliveryTracker } from '@/lib/notifications';
 
 // Request schema
@@ -82,6 +82,8 @@ export async function GET(request: NextRequest) {
 
 async function getOverviewAnalytics(fromDate: Date, toDate: Date) {
   try {
+    const supabase = await createClient();
+    
     // Get basic notification stats
     const { data: notifications, error: notificationsError } = await supabase
       .from('notifications_log')
@@ -143,6 +145,8 @@ async function getOverviewAnalytics(fromDate: Date, toDate: Date) {
 
 async function getDeliveryAnalytics(fromDate: Date, toDate: Date) {
   try {
+    const supabase = await createClient();
+    
     // Get detailed delivery metrics
     const { data: notifications, error } = await supabase
       .from('notifications_log')
@@ -219,6 +223,8 @@ async function getDeliveryAnalytics(fromDate: Date, toDate: Date) {
 
 async function getEventAnalytics(fromDate: Date, toDate: Date) {
   try {
+    const supabase = await createClient();
+    
     // Get event-related notification stats
     const { data: eventNotifications, error } = await supabase
       .from('notifications_log')
@@ -304,6 +310,8 @@ async function getEventAnalytics(fromDate: Date, toDate: Date) {
 
 async function getUserAnalytics(fromDate: Date, toDate: Date) {
   try {
+    const supabase = await createClient();
+    
     // Get user notification stats
     const { data: userNotifications, error } = await supabase
       .from('notifications_log')
