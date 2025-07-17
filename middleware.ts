@@ -8,9 +8,10 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get(name: string) {
@@ -90,6 +91,11 @@ export async function middleware(request: NextRequest) {
   }
 
   return response
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // Return response without auth checks if there's an error
+    return response
+  }
 }
 
 export const config = {

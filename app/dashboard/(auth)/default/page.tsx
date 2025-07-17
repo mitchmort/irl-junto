@@ -62,6 +62,7 @@ export async function generateMetadata() {
 }
 
 export default function Page() {
+  console.log('Default dashboard page rendering')
   return (
     <div className="space-y-4">
       <div className="flex flex-row items-center justify-between">

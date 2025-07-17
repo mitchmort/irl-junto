@@ -18,17 +18,19 @@ export default async function AuthLayout({
     cookieStore.get("sidebar_state") === undefined;
 
   return (
-    <AuthGuard requireAuth={true}>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <Sidebar />
-        <SidebarInset>
-          <Header />
-          <div className="@container/main p-4 xl:group-data-[theme-content-layout=centered]/layout:container xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:mt-8">
-            {children}
-          </div>
-          <Toaster position="top-center" />
-        </SidebarInset>
-      </SidebarProvider>
-    </AuthGuard>
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <Sidebar />
+      <SidebarInset>
+        <Header />
+        <div className="@container/main p-4 xl:group-data-[theme-content-layout=centered]/layout:container xl:group-data-[theme-content-layout=centered]/layout:mx-auto xl:group-data-[theme-content-layout=centered]/layout:mt-8">
+          <AuthGuard requireAuth={true}>
+            <div>
+              {children || <div>No children rendered</div>}
+            </div>
+          </AuthGuard>
+        </div>
+        <Toaster position="top-center" />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

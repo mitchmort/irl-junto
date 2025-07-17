@@ -20,9 +20,40 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 }) => {
   const { user, customUser, loading } = useAuthContext()
   const router = useRouter()
+  const [isRedirecting, setIsRedirecting] = React.useState(false)
+
+  React.useEffect(() => {
+    console.log('AuthGuard effect:', { loading, user: !!user, requireAuth, isRedirecting })
+    
+    // Don't do anything while loading
+    if (loading) return
+
+    // Reset redirecting state if user state matches requirements
+    if (requireAuth && user && isRedirecting) {
+      console.log('AuthGuard: User authenticated, stopping redirect')
+      setIsRedirecting(false)
+      return
+    }
+
+    // Handle authentication redirects
+    if (requireAuth && !user && !isRedirecting) {
+      console.log('AuthGuard: No user found, redirecting to login')
+      setIsRedirecting(true)
+      router.push(redirectTo)
+    } else if (requirePhoneVerification && user && (!customUser || !customUser.phone_verified) && !isRedirecting) {
+      console.log('AuthGuard: Phone verification required, redirecting')
+      setIsRedirecting(true)
+      router.push('/dashboard/login/sms')
+    } else if (!requireAuth && user && !isRedirecting) {
+      console.log('AuthGuard: User found on auth page, redirecting to dashboard')
+      setIsRedirecting(true)
+      router.push('/dashboard/default')
+    }
+  }, [user, customUser, loading, requireAuth, requirePhoneVerification, redirectTo, router, isRedirecting])
 
   // Show loading spinner while checking authentication
   if (loading) {
+    console.log('AuthGuard: Still loading')
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -33,25 +64,14 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     )
   }
 
-  // If authentication is required but user is not authenticated
-  if (requireAuth && !user) {
-    router.push(redirectTo)
-    return null
-  }
-
-  // If phone verification is required but user's phone is not verified
-  if (requirePhoneVerification && (!customUser || !customUser.phone_verified)) {
-    router.push('/dashboard/login/sms')
-    return null
-  }
-
-  // If authentication is not required but user is authenticated (like auth pages)
-  if (!requireAuth && user) {
-    router.push('/dashboard/default')
+  // Show nothing while redirecting
+  if (isRedirecting) {
+    console.log('AuthGuard: Redirecting')
     return null
   }
 
   // Render children if authentication check passes
+  console.log('AuthGuard: Rendering children')
   return <>{children}</>
 }
 

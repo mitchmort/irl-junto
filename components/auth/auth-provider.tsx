@@ -36,6 +36,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  console.log('AuthProvider: Component mounting')
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [customUser, setCustomUser] = useState<CustomUser | null>(null)
@@ -99,17 +100,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        await Promise.all([
-          fetchProfile(session.user.id),
-          fetchCustomUser(session.user.id)
-        ])
-      }
+      console.log('AuthProvider: Starting auth initialization...')
+      
+      // Set loading to false immediately for now to avoid the infinite loading
+      // We'll rely on the middleware for auth checks
       setLoading(false)
+      
+      try {
+        // Try to get the user without getSession which seems to hang
+        const { data: { user }, error } = await supabase.auth.getUser()
+        
+        if (!mounted) {
+          console.log('AuthProvider: Component unmounted, aborting')
+          return
+        }
+        
+        if (error) {
+          console.log('No authenticated user found:', error.message)
+          setUser(null)
+          setProfile(null)
+          setCustomUser(null)
+          return
+        }
+
+        console.log('User retrieved:', user?.id ? `User: ${user.id}` : 'No user')
+        setUser(user ?? null)
+        
+        if (user) {
+          await Promise.all([
+            fetchProfile(user.id),
+            fetchCustomUser(user.id)
+          ])
+        }
+      } catch (error) {
+        console.error('Unexpected error during auth initialization:', error)
+        // Clear state on any unexpected error
+        setUser(null)
+        setProfile(null)
+        setCustomUser(null)
+      }
     }
 
     getInitialSession()
@@ -117,23 +150,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
+        console.log('Auth state change:', event, session?.user?.id)
         
-        if (session?.user) {
-          await Promise.all([
-            fetchProfile(session.user.id),
-            fetchCustomUser(session.user.id)
-          ])
-        } else {
+        try {
+          setUser(session?.user ?? null)
+          
+          if (session?.user) {
+            await Promise.all([
+              fetchProfile(session.user.id),
+              fetchCustomUser(session.user.id)
+            ])
+          } else {
+            setProfile(null)
+            setCustomUser(null)
+          }
+        } catch (error) {
+          console.error('Error handling auth state change:', error)
+          // On error, clear state but don't hang
+          setUser(null)
           setProfile(null)
           setCustomUser(null)
+        } finally {
+          // Always resolve loading state
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const value = {
