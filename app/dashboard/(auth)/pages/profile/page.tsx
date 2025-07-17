@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { Settings } from "lucide-react";
-import { useEffect } from "react";
 import { CompleteYourProfileCard } from "./complete-your-profile";
 
 import { Button } from "@/components/ui/button";
@@ -11,27 +10,10 @@ import { AboutMe } from "@/app/dashboard/(auth)/pages/profile/about-me";
 import { ProfileCard } from "@/app/dashboard/(auth)/pages/profile/profile-card";
 import { SocialLinks } from "@/app/dashboard/(auth)/pages/profile/social-links";
 import { useAuth } from "@/components/auth/auth-provider";
-import { useProfileStore } from "@/store/useProfileStore";
 import ErrorBoundary from "@/components/error-boundary";
 
 export default function Page() {
   const { user } = useAuth();
-  const { fetchProfile, loading, error } = useProfileStore();
-
-  // Fetch profile data for store-dependent components
-  useEffect(() => {
-    if (user?.id) {
-      console.log('🔄 Profile page: Fetching profile data for store...');
-      fetchProfile(user.id);
-    }
-  }, [user?.id, fetchProfile]);
-
-  // Debug logging for profile store state
-  useEffect(() => {
-    if (error) {
-      console.error('❌ Profile page: Error in profile store:', error);
-    }
-  }, [error]);
 
   return (
     <ErrorBoundary>

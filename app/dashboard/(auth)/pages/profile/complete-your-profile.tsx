@@ -3,15 +3,25 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useEffect } from "react";
 
 import { Progress } from "@/components/ui/progress";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProfileStore } from "@/store/useProfileStore";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export function CompleteYourProfileCard() {
-  const { profile, loading } = useProfileStore();
+  const { user } = useAuth();
+  const { profile, loading, fetchProfile } = useProfileStore();
+
+  // Fetch profile if not already loaded
+  useEffect(() => {
+    if (user?.id && !profile && !loading) {
+      fetchProfile(user.id);
+    }
+  }, [user?.id, profile, loading]); // Removed fetchProfile from dependencies
 
   // Calculate profile completeness
   const calculateCompletion = () => {
