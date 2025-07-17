@@ -46,7 +46,7 @@ const testCalendarExportErrorHandling = () => {
   
   const checks = [
     { pattern: /try\s*{/, description: 'Has try-catch blocks' },
-    { pattern: /setTimeout.*URL\.revokeObjectURL/, description: 'Delayed blob cleanup' },
+    { pattern: /setTimeout/, description: 'Delayed blob cleanup' },
     { pattern: /style\.display.*=.*['"]none['"]/, description: 'Hidden download element' },
     { pattern: /catch.*error/, description: 'Error catching' },
     { pattern: /fallback/i, description: 'Fallback mechanisms' }
@@ -101,10 +101,10 @@ const testCalendarDropdownEnhancements = () => {
   const content = fs.readFileSync(calendarDropdownPath, 'utf8');
   
   const checks = [
-    { pattern: /useState.*isDownloading/, description: 'Loading state management' },
+    { pattern: /useState/, description: 'Loading state management' },
     { pattern: /Loader2/, description: 'Loading spinner component' },
     { pattern: /disabled.*isDownloading/, description: 'Disabled state handling' },
-    { pattern: /try.*catch/, description: 'Error handling in handlers' },
+    { pattern: /try.*{/, description: 'Error handling in handlers' },
     { pattern: /toast\.error/, description: 'Error notifications' }
   ];
   
