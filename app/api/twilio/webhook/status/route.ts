@@ -2,9 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deliveryTracker } from '@/lib/notifications';
 import { TwilioWebhookStatus } from '@/lib/twilio/types';
 import { validateRequest } from 'twilio';
+import { statusWebhookRateLimiter, getClientIP, createRateLimitHeaders } from '@/lib/security/rate-limiter';
+import { logSecurityEvent } from '@/lib/security/webhook-logger';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const clientIP = getClientIP(request);
+    const rateLimitResult = statusWebhookRateLimiter.checkLimit(clientIP);
+    
+    if (!rateLimitResult.allowed) {
+      logSecurityEvent.rateLimited('/api/twilio/webhook/status', clientIP, 50);
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Too many requests.' },
+        { 
+          status: 429,
+          headers: createRateLimitHeaders(rateLimitResult)
+        }
+      );
+    }
+
     // Validate Twilio webhook signature for security
     const signature = request.headers.get('x-twilio-signature');
     const url = request.url;
@@ -26,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
       
       if (!isValidSignature) {
-        console.error('Invalid Twilio webhook signature');
+        logSecurityEvent.invalidSignature('/api/twilio/webhook/status', clientIP, request.headers.get('user-agent') || undefined);
         return NextResponse.json(
           { error: 'Unauthorized' },
           { status: 401 }
@@ -44,7 +61,7 @@ export async function POST(request: NextRequest) {
       };
     } else if (process.env.NODE_ENV === 'production') {
       // Production mode requires signature
-      console.error('Missing Twilio webhook signature for status callback');
+      logSecurityEvent.missingSignature('/api/twilio/webhook/status', clientIP);
       return NextResponse.json(
         { error: 'Unauthorized - Missing signature' },
         { status: 401 }
@@ -76,10 +93,14 @@ export async function POST(request: NextRequest) {
     // Handle the webhook
     await deliveryTracker.handleTwilioWebhook(webhookData);
 
+    // Log successful processing
+    logSecurityEvent.success('/api/twilio/webhook/status', clientIP, webhookData.MessageSid);
+
     return NextResponse.json({ success: true });
 
-  } catch (error) {
-    console.error('Twilio webhook error:', error);
+  } catch (error: any) {
+    const clientIP = getClientIP(request);
+    logSecurityEvent.error('/api/twilio/webhook/status', clientIP, error.message || 'Unknown error');
     
     return NextResponse.json(
       { error: 'Internal server error' },

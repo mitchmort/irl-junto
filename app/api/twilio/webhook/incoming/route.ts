@@ -3,9 +3,26 @@ import { createClient } from '@/lib/supabase/server';
 import { TwilioWebhookIncoming } from '@/lib/twilio/types';
 import { normalizePhoneNumber } from '@/lib/twilio/phone-utils';
 import { validateRequest } from 'twilio';
+import { smsWebhookRateLimiter, getClientIP, createRateLimitHeaders } from '@/lib/security/rate-limiter';
+import { logSecurityEvent } from '@/lib/security/webhook-logger';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const clientIP = getClientIP(request);
+    const rateLimitResult = smsWebhookRateLimiter.checkLimit(clientIP);
+    
+    if (!rateLimitResult.allowed) {
+      logSecurityEvent.rateLimited('/api/twilio/webhook/incoming', clientIP, 10);
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Too many requests.' },
+        { 
+          status: 429,
+          headers: createRateLimitHeaders(rateLimitResult)
+        }
+      );
+    }
+
     // Validate Twilio webhook signature for security
     const signature = request.headers.get('x-twilio-signature');
     const url = request.url;
@@ -26,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
       
       if (!isValidSignature) {
-        console.error('Invalid Twilio webhook signature for incoming SMS');
+        logSecurityEvent.invalidSignature('/api/twilio/webhook/incoming', clientIP, request.headers.get('user-agent') || undefined);
         return NextResponse.json(
           { error: 'Unauthorized' },
           { status: 401 }
@@ -34,7 +51,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (process.env.NODE_ENV === 'production') {
       // Production mode requires signature
-      console.error('Missing Twilio webhook signature for incoming SMS');
+      logSecurityEvent.missingSignature('/api/twilio/webhook/incoming', clientIP);
       return NextResponse.json(
         { error: 'Unauthorized - Missing signature' },
         { status: 401 }
@@ -123,6 +140,9 @@ export async function POST(request: NextRequest) {
       response = 'Thank you for your message. For support, please visit junto.app/help or contact us through the app.';
     }
 
+    // Log successful processing
+    logSecurityEvent.success('/api/twilio/webhook/incoming', clientIP, webhookData.MessageSid);
+
     // Return TwiML response
     return new Response(
       `<?xml version="1.0" encoding="UTF-8"?>
@@ -136,8 +156,9 @@ export async function POST(request: NextRequest) {
       }
     );
 
-  } catch (error) {
-    console.error('Incoming SMS webhook error:', error);
+  } catch (error: any) {
+    const clientIP = getClientIP(request);
+    logSecurityEvent.error('/api/twilio/webhook/incoming', clientIP, error.message || 'Unknown error');
     
     // Return generic error response
     return new Response(
