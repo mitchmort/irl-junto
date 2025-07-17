@@ -1,10 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { TwilioWebhookIncoming } from '@/lib/twilio/types';
 import { normalizePhoneNumber } from '@/lib/twilio/phone-utils';
+import { validateRequest } from 'twilio';
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate Twilio webhook signature for security
+    const signature = request.headers.get('x-twilio-signature');
+    const url = request.url;
+    
+    if (process.env.NODE_ENV === 'production' && signature) {
+      const formData = await request.formData();
+      const params: Record<string, string> = {};
+      
+      for (const [key, value] of formData.entries()) {
+        params[key] = value.toString();
+      }
+      
+      const isValidSignature = validateRequest(
+        process.env.TWILIO_AUTH_TOKEN!,
+        signature,
+        url,
+        params
+      );
+      
+      if (!isValidSignature) {
+        console.error('Invalid Twilio webhook signature for incoming SMS');
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+    } else if (process.env.NODE_ENV === 'production') {
+      // Production mode requires signature
+      console.error('Missing Twilio webhook signature for incoming SMS');
+      return NextResponse.json(
+        { error: 'Unauthorized - Missing signature' },
+        { status: 401 }
+      );
+    }
+
     // Parse form data from Twilio webhook
     const formData = await request.formData();
     
@@ -28,6 +64,9 @@ export async function POST(request: NextRequest) {
 
     // Normalize phone number
     const normalizedFrom = normalizePhoneNumber(webhookData.From);
+
+    // Create supabase client
+    const supabase = await createClient();
 
     // Find user by phone number
     const { data: user, error: userError } = await supabase

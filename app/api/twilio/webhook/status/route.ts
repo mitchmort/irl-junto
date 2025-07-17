@@ -42,8 +42,16 @@ export async function POST(request: NextRequest) {
         From: params.From,
         Body: params.Body,
       };
+    } else if (process.env.NODE_ENV === 'production') {
+      // Production mode requires signature
+      console.error('Missing Twilio webhook signature for status callback');
+      return NextResponse.json(
+        { error: 'Unauthorized - Missing signature' },
+        { status: 401 }
+      );
     } else {
-      // Development mode or missing signature - parse normally
+      // Development mode - parse normally but log for security awareness
+      console.log('⚠️  Development mode: Twilio webhook signature validation skipped');
       const formData = await request.formData();
       
       webhookData = {
