@@ -19,6 +19,7 @@ import { EditableField } from "@/components/event-edit/editable-field";
 import { EditableDate } from "@/components/event-edit/editable-date";
 import { EditableTime } from "@/components/event-edit/editable-time";
 import { EditableSelect } from "@/components/event-edit/editable-select";
+import { DateTimeSection } from "./date-time-section";
 
 interface EventDetailsProps {
   event: {
@@ -76,11 +77,11 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
   return (
     <div className="space-y-1.5">
       {/* Basic Event Info Cards */}
-      <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="p-2 py-2 gap-1">
           <div className="flex items-center gap-2.5">
-            <Calendar className="w-5 h-5 text-muted-foreground" />
-            <div>
+            <Calendar className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-muted-foreground">Date</p>
               {editMode ? (
                 <EditableDate
@@ -96,7 +97,7 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
                   }}
                 />
               ) : (
-                <p className="font-semibold">{formatDate(event.date)}</p>
+                <p className="font-semibold break-words">{formatDate(event.date)}</p>
               )}
             </div>
           </div>
@@ -104,8 +105,8 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
 
         <Card className="p-2 py-2 gap-1">
           <div className="flex items-center gap-2.5">
-            <Clock className="w-5 h-5 text-muted-foreground" />
-            <div>
+            <Clock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-muted-foreground">Time</p>
               {editMode ? (
                 <EditableTime
@@ -114,7 +115,7 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
                   className="font-semibold"
                 />
               ) : (
-                <p className="font-semibold">{formatTime(event.time)}</p>
+                <p className="font-semibold break-words">{formatTime(event.time)}</p>
               )}
             </div>
           </div>
@@ -122,8 +123,8 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
 
         <Card className="p-2 py-2 gap-1">
           <div className="flex items-center gap-2.5">
-            <Users className="w-5 h-5 text-muted-foreground" />
-            <div>
+            <Users className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-muted-foreground">Players</p>
               {editMode ? (
                 <div className="font-semibold">
@@ -147,7 +148,7 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
                   />
                 </div>
               ) : (
-                <p className="font-semibold">
+                <p className="font-semibold break-words">
                   {event.participant_count} / {event.max_participants}
                 </p>
               )}
@@ -157,14 +158,21 @@ export function EventDetails({ event, permissions, editMode = false }: EventDeta
 
         <Card className="p-2 py-2 gap-1">
           <div className="flex items-center gap-2.5">
-            <Trophy className="w-5 h-5 text-muted-foreground" />
-            <div>
+            <Trophy className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0 flex-1">
               <p className="text-sm text-muted-foreground">Skill Level</p>
-              <p className="font-semibold capitalize">{getSkillLevel()}</p>
+              <p className="font-semibold capitalize break-words">{getSkillLevel()}</p>
             </div>
           </div>
         </Card>
       </div>
+
+      {/* Date and Time Section */}
+      <DateTimeSection 
+        event={event} 
+        participantCount={event.participant_count}
+        editMode={editMode} 
+      />
 
       {/* Event Description */}
       <Card className="py-2 gap-2">

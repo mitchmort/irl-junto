@@ -177,13 +177,13 @@ const EventMapLocation = React.memo(function EventMapLocation({
               )}
               <div className="text-sm text-muted-foreground space-y-0.5">
                 <div className="break-words">{address}</div>
-                <div>{city} {zip}</div>
+                <div className="break-words">{city} {zip}</div>
               </div>
             </div>
           </div>
           
           {/* Action buttons */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:gap-3">
+          <div className="grid grid-cols-1 gap-2 xs:grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 lg:gap-3">
             <Button 
               variant="outline" 
               size="sm" 

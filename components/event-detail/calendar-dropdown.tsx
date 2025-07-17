@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, Download, Link2, Calendar } from "lucide-react";
+import { CalendarPlus, Download, Link2, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateCalendarUrls, downloadICalendar } from '@/lib/calendar-export';
 import { Event } from '@/types/database';
@@ -30,37 +30,72 @@ export function CalendarDropdown({
   className,
   variant = "outline"
 }: CalendarDropdownProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
   const calendarData = { event, organizerName, participantCount };
   const urls = generateCalendarUrls(calendarData);
   
   const handleGoogleCalendar = () => {
-    window.open(urls.google, '_blank');
-    toast.success("Opening Google Calendar", {
-      description: "Add the event to your Google Calendar in the new tab.",
-    });
+    try {
+      window.open(urls.google, '_blank');
+      toast.success("Opening Google Calendar", {
+        description: "Add the event to your Google Calendar in the new tab.",
+      });
+    } catch (error) {
+      toast.error("Failed to open Google Calendar", {
+        description: "Please try again or use the download option.",
+      });
+    }
   };
   
   const handleAppleCalendar = () => {
-    // For Apple Calendar, we'll use the webcal URL which works better
-    window.location.href = urls.webcal;
-    toast.success("Opening Apple Calendar", {
-      description: "Your calendar app should open automatically. Confirm to add the event.",
-    });
+    try {
+      // For Apple Calendar, we'll use the webcal URL which works better
+      window.location.href = urls.webcal;
+      toast.success("Opening Apple Calendar", {
+        description: "Your calendar app should open automatically. Confirm to add the event.",
+      });
+    } catch (error) {
+      toast.error("Failed to open Apple Calendar", {
+        description: "Please try the download option instead.",
+      });
+    }
   };
   
-  const handleOutlook = () => {
-    // Outlook also works well with .ics download
-    downloadICalendar(calendarData);
-    toast.success("Calendar file downloaded", {
-      description: "Open the downloaded file to add the event to Outlook.",
-    });
+  const handleOutlook = async () => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    try {
+      // Outlook also works well with .ics download
+      downloadICalendar(calendarData);
+      toast.success("Calendar file downloaded", {
+        description: "Open the downloaded file to add the event to Outlook.",
+      });
+    } catch (error) {
+      toast.error("Download failed", {
+        description: "Please try again or use Google Calendar option.",
+      });
+    } finally {
+      setTimeout(() => setIsDownloading(false), 1000);
+    }
   };
   
-  const handleDownload = () => {
-    downloadICalendar(calendarData);
-    toast.success("Calendar file downloaded", {
-      description: "Open the downloaded .ics file with your preferred calendar app.",
-    });
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    try {
+      downloadICalendar(calendarData);
+      toast.success("Calendar file downloaded", {
+        description: "Open the downloaded .ics file with your preferred calendar app.",
+      });
+    } catch (error) {
+      toast.error("Download failed", {
+        description: "Please try again.",
+      });
+    } finally {
+      setTimeout(() => setIsDownloading(false), 1000);
+    }
   };
   
   const handleSubscribe = async () => {
@@ -81,38 +116,50 @@ export function CalendarDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} className={className}>
-          <CalendarPlus className="w-4 h-4 mr-2" />
-          Add to Calendar
+        <Button variant={variant} className={className} disabled={isDownloading}>
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <CalendarPlus className="w-4 h-4 mr-2" />
+          )}
+          {isDownloading ? 'Downloading...' : 'Add to Calendar'}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Choose Calendar</DropdownMenuLabel>
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleGoogleCalendar}>
+        <DropdownMenuItem onClick={handleGoogleCalendar} disabled={isDownloading}>
           <Calendar className="w-4 h-4 mr-2" />
           Google Calendar
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={handleAppleCalendar}>
+        <DropdownMenuItem onClick={handleAppleCalendar} disabled={isDownloading}>
           <Calendar className="w-4 h-4 mr-2" />
           Apple Calendar
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={handleOutlook}>
-          <Calendar className="w-4 h-4 mr-2" />
+        <DropdownMenuItem onClick={handleOutlook} disabled={isDownloading}>
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Calendar className="w-4 h-4 mr-2" />
+          )}
           Outlook
         </DropdownMenuItem>
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleDownload}>
-          <Download className="w-4 h-4 mr-2" />
+        <DropdownMenuItem onClick={handleDownload} disabled={isDownloading}>
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
           Download .ics file
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={handleSubscribe}>
+        <DropdownMenuItem onClick={handleSubscribe} disabled={isDownloading}>
           <Link2 className="w-4 h-4 mr-2" />
           Copy subscription link
         </DropdownMenuItem>

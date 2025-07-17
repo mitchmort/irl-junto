@@ -127,6 +127,12 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
   selectedDate: null,
 
   fetchEvents: async () => {
+    // Prevent multiple simultaneous fetch requests
+    const currentState = get();
+    if (currentState.loading) {
+      return;
+    }
+    
     set({ loading: true, error: null });
     
     try {
@@ -171,8 +177,23 @@ const calendarEventStore: StateCreator<Store> = (set, get) => ({
       set({ events: calendarEvents, loading: false });
     } catch (error: any) {
       console.error('Calendar fetch error:', error);
-      set({ error: error.message, loading: false });
-      handleError(error);
+      
+      // More specific error handling
+      let errorMessage = 'Failed to load calendar events';
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error - please check your connection';
+      } else if (error.message?.includes('auth')) {
+        errorMessage = 'Authentication error - please log in again';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      set({ error: errorMessage, loading: false });
+      
+      // Only call handleError for non-network errors to avoid spam
+      if (!error.message?.includes('network') && !error.message?.includes('fetch')) {
+        handleError(error);
+      }
     }
   },
 

@@ -164,15 +164,42 @@ END:VCALENDAR`;
 export function downloadICalendar(data: CalendarEventData, filename?: string) {
   const icsContent = generateICalendar(data);
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
   
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename || `${data.event.url_slug || data.event.id}-event.ics`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || `${data.event.url_slug || data.event.id}-event.ics`;
+    a.style.display = 'none'; // Hide the element
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up with a slight delay to ensure download starts
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+  } catch (error) {
+    console.error('Failed to download calendar file:', error);
+    // Fallback: try to open the content in a new window
+    try {
+      const dataUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`;
+      const newWindow = window.open(dataUrl);
+      if (!newWindow) {
+        throw new Error('Popup blocked');
+      }
+    } catch (fallbackError) {
+      // Final fallback: copy to clipboard
+      navigator.clipboard.writeText(icsContent).then(() => {
+        console.log('Calendar content copied to clipboard as fallback');
+      }).catch(() => {
+        console.error('All download methods failed');
+      });
+    }
+  }
 }
 
 /**

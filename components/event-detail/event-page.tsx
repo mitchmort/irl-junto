@@ -170,21 +170,21 @@ export function EventPage({ eventId, eventSlug, editMode = false }: EventPagePro
     <div className="space-y-1.5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0 flex-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="font-display text-xl tracking-tight lg:text-2xl">
+            <h1 className="font-display text-xl tracking-tight lg:text-2xl min-w-0 break-words">
               {event.title}
             </h1>
             {getEventStatusBadge()}
           </div>
           
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4 flex-shrink-0" />
               <span>{formatDate(event.date)}</span>
             </div>
             {permissions.isAuthenticated && (
-              <div>
+              <div className="min-w-0">
                 <span className="font-medium text-foreground">Event ID:</span> {event.id.toString().slice(0, 8)}
               </div>
             )}
@@ -192,7 +192,7 @@ export function EventPage({ eventId, eventSlug, editMode = false }: EventPagePro
         </div>
 
         {/* Actions based on permissions */}
-        <div className="shrink-0">
+        <div className="shrink-0 w-full sm:w-auto">
           <EventActions 
             eventId={actualEventId} 
             permissions={permissions}
@@ -202,7 +202,7 @@ export function EventPage({ eventId, eventSlug, editMode = false }: EventPagePro
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-1.5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-3">
         {/* Map Location */}
         <div className="xl:col-span-1">
           <EventMapLocation 
